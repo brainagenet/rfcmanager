@@ -1,5 +1,6 @@
-/**
- * 
+/*
+ * net.brainage.rfc.util.ChangeRequestParser.java
+ * Created on 2011. 6. 20.
  */
 package net.brainage.rfc.util;
 
@@ -15,10 +16,11 @@ import jxl.Workbook;
 import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.ChangeRequestResource;
 
-
 /**
- * @author exia
- *
+ * 
+ * 
+ * @author ms29.seo@gmail.com
+ * @version 1.0
  */
 public class ChangeRequestParser
 {
@@ -85,7 +87,6 @@ public class ChangeRequestParser
             workbook = Workbook.getWorkbook(new BufferedInputStream(new FileInputStream(formFile)));
             Sheet sheet = workbook.getSheet(0);
 
-            changeRequest.clearResources();
             loadInformation(sheet);
             loadResourceItems(sheet);
         } finally {
@@ -133,6 +134,7 @@ public class ChangeRequestParser
         int startRow = 6;
         int lastRow = sheet.getRows();
 
+        changeRequest.clearResources();
         for (int row = startRow; row < lastRow; row++) {
             String resource = getCellContent(sheet, ChangeRequestFormInfo.COLUMN_RESOURCE, row);
             if (resource == null || resource.length() == 0) {
