@@ -4,8 +4,6 @@
  */
 package net.brainage.rfc.ui;
 
-import org.eclipse.swt.widgets.Display;
-
 import net.brainage.rfc.model.WorkPhaseContext;
 
 /**
@@ -14,7 +12,7 @@ import net.brainage.rfc.model.WorkPhaseContext;
  * @author ms29.seo@gmail.com
  * @version 1.0
  */
-public abstract class AsyncExecutor
+public abstract class AsyncExecutor implements Runnable
 {
 
     private WorkPhaseContext context;
@@ -27,22 +25,21 @@ public abstract class AsyncExecutor
         return context;
     }
 
-    protected void preExecute() {
+    public void run() {
+        boolean flag = preProcess();
+        if (flag) {
+            internalProcess();
+            postProcess();
+        }
     }
 
-    public abstract void internalExecute();
-
-    protected void postExecute() {
+    protected boolean preProcess() {
+        return true;
     }
 
-    public void execute(Display display) {
-        display.asyncExec(new Runnable() {
-            public void run() {
-                preExecute();
-                internalExecute();
-                postExecute();
-            }
-        });
+    protected abstract void internalProcess();
+
+    protected void postProcess() {
     }
 
 }

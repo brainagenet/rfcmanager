@@ -21,24 +21,21 @@ import net.brainage.rfc.ui.AsyncExecutor;
 public class RunAsyncExecutor extends AsyncExecutor
 {
 
-    private static final Logger logger = LoggerFactory.getLogger(RunAsyncExecutor.class);
+    private static final Logger log = LoggerFactory.getLogger(RunAsyncExecutor.class);
 
-    /**
-     * @param _context
-     */
     public RunAsyncExecutor(WorkPhaseContext _context) {
         super(_context);
     }
 
-    /* (non-Javadoc)
-     * @see net.brainage.rfc.ui.AsyncExecutor#internalExecute()
-     */
-    public void internalExecute() {
+    protected void internalProcess() {
+        if ( log.isInfoEnabled()) {
+            log.info(">> call internal process...");
+        }
         try {
             WorkPhaseChain phaseChain = WorkPhaseChainFactory.getWorkPhaseChain();
             phaseChain.start(getContext());
         } catch (Exception ex) {
-            logger.error("Occur error during run '" + getContext().getPhaseName()
+            log.error("Occur error during run '" + getContext().getPhaseName()
                     + "' work phase...", ex);
         }
     }
