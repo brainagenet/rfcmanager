@@ -22,6 +22,7 @@ public class ChangeRequest extends AbstractModelObject
     private String requestDate;
     private String summary;
     private String comment;
+    private String connectionUrl;
 
     private List<ChangeRequestResource> resources = new ArrayList<ChangeRequestResource>();
 
@@ -141,6 +142,22 @@ public class ChangeRequest extends AbstractModelObject
         String oldValue = this.comment;
         this.comment = comment;
         firePropertyChange("comment", oldValue, this.comment);
+    }
+
+    /**
+     * @return the connectionUrl
+     */
+    public String getConnectionUrl() {
+        return connectionUrl;
+    }
+
+    /**
+     * @param connectionUrl the connectionUrl to set
+     */
+    public void setConnectionUrl(String connectionUrl) {
+        String oldValue = this.connectionUrl;
+        this.connectionUrl = connectionUrl;
+        firePropertyChange("connectionUrl", oldValue, this.connectionUrl);
     }
 
     /**

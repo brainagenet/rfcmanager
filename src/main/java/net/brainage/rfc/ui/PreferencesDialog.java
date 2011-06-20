@@ -39,7 +39,7 @@ public class PreferencesDialog extends Dialog
     private static final Logger log = LoggerFactory.getLogger(PreferencesDialog.class);
 
     public static final String[] SUPPORT_PROTOCOLS = new String[] {
-            "http://", "https://", "svn://", "svn+xxx:///", "file://" };
+            "http://", "https://", "svn://", "svn+ssh:///", "file://" };
 
     private Configuration config = Configuration.getInstance();
 

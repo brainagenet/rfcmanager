@@ -13,6 +13,17 @@ import java.util.List;
 public class WorkPhaseContext extends AbstractModelObject
 {
 
+    public static class Property
+    {
+
+        public static final String PHASE_NAME = "phaseName";
+        public static final String PHASE_DESC = "phaseDescription";
+        public static final String ERRORS = "errors";
+
+        private Property() {
+        }
+    }
+
     private ChangeRequest changeRequest;
 
     private String phaseName;
@@ -46,7 +57,7 @@ public class WorkPhaseContext extends AbstractModelObject
     public void setPhaseName(String phaseName) {
         String oldValue = this.phaseName;
         this.phaseName = phaseName;
-        firePropertyChange("phaseName", oldValue, this.phaseName);
+        firePropertyChange(Property.PHASE_NAME, oldValue, this.phaseName);
     }
 
     /**
@@ -62,7 +73,20 @@ public class WorkPhaseContext extends AbstractModelObject
     public void setPhaseDescription(String phaseDescription) {
         String oldValue = this.phaseDescription;
         this.phaseDescription = phaseDescription;
-        firePropertyChange("phaseDescription", oldValue, this.phaseDescription);
+        firePropertyChange(Property.PHASE_DESC, oldValue, this.phaseDescription);
+    }
+
+    /**
+     * @param resource
+     * @param msg
+     */
+    public void addError(String resource, String msg) {
+        ErrorDescription error = new ErrorDescription();
+        error.setNo(this.sizeOfErrors() + 1);
+        error.setResource(resource);
+        error.setDescription(msg);
+
+        addError(error);
     }
 
     /**
@@ -70,7 +94,7 @@ public class WorkPhaseContext extends AbstractModelObject
      */
     public void addError(ErrorDescription error) {
         this.errors.add(error);
-        firePropertyChange("errors", null, this.errors);
+        firePropertyChange(Property.ERRORS, null, this.errors);
     }
 
     /**
@@ -78,7 +102,7 @@ public class WorkPhaseContext extends AbstractModelObject
      */
     public void removeError(ErrorDescription error) {
         this.errors.remove(error);
-        firePropertyChange("errors", null, this.errors);
+        firePropertyChange(Property.ERRORS, null, this.errors);
     }
 
     /**
@@ -86,7 +110,7 @@ public class WorkPhaseContext extends AbstractModelObject
      */
     public void clearErrors() {
         this.errors.clear();
-        firePropertyChange("errors", null, this.errors);
+        firePropertyChange(Property.ERRORS, null, this.errors);
     }
 
     /**
@@ -104,12 +128,19 @@ public class WorkPhaseContext extends AbstractModelObject
     }
 
     /**
+     * @return
+     */
+    public boolean hasErrors() {
+        return (this.errors.size() > 0);
+    }
+
+    /**
      * 
      */
-    public void dispose() {
+    public void initialize() {
         setPhaseName(null);
         setPhaseDescription(null);
         clearErrors();
     }
-    
+
 }

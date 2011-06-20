@@ -4,11 +4,15 @@
  */
 package net.brainage.rfc.ui;
 
+import java.beans.PropertyChangeListener;
+
 import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.ChangeRequestResource;
 import net.brainage.rfc.model.ErrorDescription;
 import net.brainage.rfc.model.WorkPhaseContext;
+import net.brainage.rfc.ui.event.ConnectionUrlChangeListener;
 import net.brainage.rfc.ui.event.FilePropertyChangeListener;
+import net.brainage.rfc.ui.executor.RunAsyncExecutor;
 
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.beans.BeansObservables;
@@ -145,6 +149,9 @@ public class MainWindow
     private void registerPropertyEvent() {
         this.changeRequest.addPropertyChangeListener("file", new FilePropertyChangeListener(
                 changeRequest));
+        PropertyChangeListener listener = new ConnectionUrlChangeListener(changeRequest);
+        this.changeRequest.addPropertyChangeListener("component", listener);
+        this.changeRequest.addPropertyChangeListener("module", listener);
     }
 
     /**
@@ -153,7 +160,7 @@ public class MainWindow
     protected void createContents() {
         this.shell = new Shell();
         this.shell.setImage(SWTResourceManager.getImage(MainWindow.class, "/icons/silk/bricks.png"));
-        this.shell.setSize(800, 600);
+        this.shell.setSize(900, 700);
         this.shell.setText("Change Request Manager - Subversion");
         GridLayout gl_shell = new GridLayout(1, false);
         gl_shell.verticalSpacing = 0;
@@ -184,7 +191,7 @@ public class MainWindow
         gd_componentLabel.widthHint = 70;
         this.componentLabel.setLayoutData(gd_componentLabel);
         this.componentLabel.setText("Component :");
-        
+
         this.componentText = new Text(this.crformPanel, SWT.BORDER);
         this.componentText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
@@ -194,7 +201,7 @@ public class MainWindow
         gd_moduleLabel.widthHint = 70;
         this.moduleLabel.setLayoutData(gd_moduleLabel);
         this.moduleLabel.setText("Module :");
-        
+
         this.moduleText = new Text(this.crformPanel, SWT.BORDER);
         this.moduleText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
@@ -350,6 +357,29 @@ public class MainWindow
         this.openToolItem.setText("&Open");
 
         this.runToolItem = new ToolItem(this.toolBar, SWT.NONE);
+        this.runToolItem.addSelectionListener(new SelectionAdapter() {
+            public void widgetSelected(SelectionEvent e) {
+                if (log.isInfoEnabled()) {
+                    log.info("initialize Work Phase Context...");
+                }
+                phaseContext.initialize();
+
+                final Display display = Display.getCurrent();
+                if (log.isDebugEnabled()) {
+                    log.info("    - display instanc = " + display);
+                }
+                new Thread(new Runnable() {
+                    public void run() {
+                        if (log.isInfoEnabled()) {
+                            log.info(">> run process automation...");
+                        }
+
+                        AsyncExecutor asyncExecutor = new RunAsyncExecutor(phaseContext);
+                        asyncExecutor.execute(display);
+                    }
+                }).start();
+            }
+        });
         this.runToolItem.setEnabled(false);
         this.runToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
                 "/icons/start_task.gif"));
@@ -424,6 +454,10 @@ public class MainWindow
         //
         IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(Realm.getDefault(), phaseContext, "errors");
         errorsTableViewer.setInput(phaseContextErrorsObserveList);
+        //
+        IObservableValue changeRequestConnectionUrlObserveValue = BeansObservables.observeValue(changeRequest, "connectionUrl");
+        IObservableValue connectionLabelObserveTextObserveWidget = SWTObservables.observeText(connectionLabel);
+        bindingContext.bindValue(changeRequestConnectionUrlObserveValue, connectionLabelObserveTextObserveWidget, null, null);
         //
         return bindingContext;
     }
