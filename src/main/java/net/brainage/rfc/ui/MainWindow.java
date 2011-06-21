@@ -5,16 +5,20 @@
 package net.brainage.rfc.ui;
 
 import java.beans.PropertyChangeListener;
+import java.io.File;
 
+import net.brainage.rfc.Constants;
+import net.brainage.rfc.config.Configuration;
 import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.ChangeRequestResource;
 import net.brainage.rfc.model.ErrorDescription;
+import net.brainage.rfc.model.ViewHolder;
 import net.brainage.rfc.model.WorkPhaseContext;
-import net.brainage.rfc.phase.WorkPhaseChain;
-import net.brainage.rfc.phase.WorkPhaseChainFactory;
 import net.brainage.rfc.ui.event.ConnectionUrlChangeListener;
 import net.brainage.rfc.ui.event.FilePropertyChangeListener;
 import net.brainage.rfc.ui.executor.RunAsyncExecutor;
+import net.brainage.rfc.util.svn.SvnClient;
+import net.brainage.rfc.util.svn.SvnClientImpl;
 
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.beans.BeansObservables;
@@ -36,6 +40,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.ProgressBar;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
@@ -48,434 +53,494 @@ import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.wb.swt.SWTResourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNException;
+import org.eclipse.swt.widgets.Combo;
 
 /**
- *
+ * 
  * 
  * 
  * @author ms29.seo@gmail.com
  * @version 1.0
  */
-public class MainWindow
-{
-    DataBindingContext m_bindingContext;
+public class MainWindow {
+	DataBindingContext m_bindingContext;
 
-    private static final Logger log = LoggerFactory.getLogger(MainWindow.class);
+	private static final Logger log = LoggerFactory.getLogger(MainWindow.class);
 
-    /* ---------- Models ---------- */
-    private ChangeRequest changeRequest = new ChangeRequest();
-    private WorkPhaseContext phaseContext = new WorkPhaseContext(changeRequest);
+	Configuration config = Configuration.getInstance();
 
-    /* ---------- UI Components ---------- */
-    protected Shell shell;
-    private ToolBar toolBar;
-    private ToolItem openToolItem;
-    private ToolItem runToolItem;
-    private ToolItem prefToolItem;
-    private ToolItem exitToolItem;
-    private Label toolBarSeparator;
-    private Composite contentPanel;
-    private Label statusSepararot;
-    private Group crformPanel;
-    private Label componentLabel;
-    private Label moduleLabel;
-    private Label summaryLabel;
-    private Text summaryText;
-    private Group progressPanel;
-    private Label progressNameLabel;
-    private ProgressBar progressBar;
-    private Label ProgressDescriptionLabel;
-    private TabFolder tabFolder;
-    private TabItem resourcesTabItem;
-    private Composite resourcesPanel;
-    private TabItem errorsTabItem;
-    private Composite errorsPanel;
-    private Label fileLabel;
-    private Text fileText;
-    private Table resourcesTable;
-    private TableViewer resourcesTableViewer;
-    private TableColumn resNoColumn;
-    private TableColumn resourceColumn;
-    private TableColumn revisionColumn;
-    private TableColumn typeColumn;
-    private TableColumn statusColumn;
-    private Composite statusPanel;
-    private Label statusLabel;
-    private Label connectionLabel;
-    private Label errorStatusLabel;
-    private Table errorsTable;
-    private TableViewer errorsTableViewer;
-    private TableColumn errDescColumn;
-    private TableColumn errNoColumn;
-    private TableColumn errResourceColumn;
-    private Text componentText;
-    private Text moduleText;
+	/* ---------- Models ---------- */
+	private ChangeRequest changeRequest = new ChangeRequest();
+	private WorkPhaseContext phaseContext = new WorkPhaseContext(changeRequest);
 
-    /**
-     * Launch the application.
-     * @param args
-     */
-    public static void main(String[] args) {
-        Display display = Display.getDefault();
-        Realm.runWithDefault(SWTObservables.getRealm(display), new Runnable() {
-            public void run() {
-                try {
-                    MainWindow window = new MainWindow();
-                    window.open();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
+	/* ---------- UI Components ---------- */
+	protected Shell shell;
+	private ToolBar toolBar;
+	private ToolItem openToolItem;
+	private ToolItem runToolItem;
+	private ToolItem prefToolItem;
+	private ToolItem exitToolItem;
+	private Label toolBarSeparator;
+	private Composite contentPanel;
+	private Label statusSepararot;
+	private Group crformPanel;
+	private Label componentLabel;
+	private Label moduleLabel;
+	private Label summaryLabel;
+	private Text summaryText;
+	private Group progressPanel;
+	private Label progressNameLabel;
+	private ProgressBar progressBar;
+	private Label ProgressDescriptionLabel;
+	private TabFolder tabFolder;
+	private TabItem resourcesTabItem;
+	private Composite resourcesPanel;
+	private TabItem errorsTabItem;
+	private Composite errorsPanel;
+	private Label fileLabel;
+	private Text fileText;
+	private Table resourcesTable;
+	private TableViewer resourcesTableViewer;
+	private TableColumn resNoColumn;
+	private TableColumn resourceColumn;
+	private TableColumn revisionColumn;
+	private TableColumn typeColumn;
+	private TableColumn statusColumn;
+	private Composite statusPanel;
+	private Label statusLabel;
+	private Label connectionLabel;
+	private Label errorStatusLabel;
+	private Table errorsTable;
+	private TableViewer errorsTableViewer;
+	private TableColumn errDescColumn;
+	private TableColumn errNoColumn;
+	private TableColumn errResourceColumn;
+	private ToolItem checkoutToolItem;
+	private Combo componentCombo;
+	private Combo moduleCombo;
 
-    /**
-     * Open the window.
-     */
-    public void open() {
-        Display display = Display.getDefault();
-        registerPropertyEvent();
-        createContents();
-        this.shell.open();
-        this.shell.layout();
-        while (!this.shell.isDisposed()) {
-            if (!display.readAndDispatch()) {
-                display.sleep();
-            }
-        }
-    }
+	/**
+	 * Launch the application.
+	 * 
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		Display display = Display.getDefault();
+		Realm.runWithDefault(SWTObservables.getRealm(display), new Runnable() {
+			public void run() {
+				try {
+					MainWindow window = new MainWindow();
+					window.open();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
 
-    /**
+	/**
+	 * Open the window.
+	 */
+	public void open() {
+		Display display = Display.getDefault();
+		registerPropertyEvent();
+		createContents();
+		this.shell.open();
+		this.shell.layout();
+		while (!this.shell.isDisposed()) {
+			if (!display.readAndDispatch()) {
+				display.sleep();
+			}
+		}
+	}
+
+	/**
      * 
      */
-    private void registerPropertyEvent() {
-        this.changeRequest.addPropertyChangeListener("file", new FilePropertyChangeListener(
-                changeRequest));
-        PropertyChangeListener listener = new ConnectionUrlChangeListener(changeRequest);
-        this.changeRequest.addPropertyChangeListener("component", listener);
-        this.changeRequest.addPropertyChangeListener("module", listener);
-    }
+	private void registerPropertyEvent() {
+		this.changeRequest.addPropertyChangeListener("file",
+				new FilePropertyChangeListener(changeRequest));
+		PropertyChangeListener listener = new ConnectionUrlChangeListener(
+				changeRequest);
+		this.changeRequest.addPropertyChangeListener("component", listener);
+		this.changeRequest.addPropertyChangeListener("module", listener);
+	}
 
-    /**
-     * Create contents of the window.
-     */
-    protected void createContents() {
-        this.shell = new Shell();
-        this.shell
-                .setImage(SWTResourceManager.getImage(MainWindow.class, "/icons/silk/bricks.png"));
-        this.shell.setSize(900, 700);
-        this.shell.setText("Change Request Manager - Subversion");
-        GridLayout gl_shell = new GridLayout(1, false);
-        gl_shell.verticalSpacing = 0;
-        gl_shell.marginWidth = 0;
-        gl_shell.marginHeight = 0;
-        gl_shell.horizontalSpacing = 0;
-        this.shell.setLayout(gl_shell);
+	/**
+	 * Create contents of the window.
+	 */
+	protected void createContents() {
+		this.shell = new Shell();
+		this.shell.setImage(SWTResourceManager.getImage(MainWindow.class,
+				"/icons/silk/bricks.png"));
+		this.shell.setSize(900, 700);
+		this.shell.setText("Change Request Manager - Subversion");
+		GridLayout gl_shell = new GridLayout(1, false);
+		gl_shell.verticalSpacing = 0;
+		gl_shell.marginWidth = 0;
+		gl_shell.marginHeight = 0;
+		gl_shell.horizontalSpacing = 0;
+		this.shell.setLayout(gl_shell);
 
-        createToolBarPanel();
+		createToolBarPanel();
 
-        this.toolBarSeparator = new Label(this.shell, SWT.SEPARATOR | SWT.HORIZONTAL);
-        GridData gd_toolBarSeparator = new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1);
-        gd_toolBarSeparator.verticalIndent = 5;
-        this.toolBarSeparator.setLayoutData(gd_toolBarSeparator);
+		this.toolBarSeparator = new Label(this.shell, SWT.SEPARATOR
+				| SWT.HORIZONTAL);
+		GridData gd_toolBarSeparator = new GridData(SWT.FILL, SWT.CENTER, true,
+				false, 1, 1);
+		gd_toolBarSeparator.verticalIndent = 5;
+		this.toolBarSeparator.setLayoutData(gd_toolBarSeparator);
 
-        this.contentPanel = new Composite(this.shell, SWT.NONE);
-        this.contentPanel.setLayout(new GridLayout(1, false));
-        this.contentPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false, true, 1, 1));
+		this.contentPanel = new Composite(this.shell, SWT.NONE);
+		this.contentPanel.setLayout(new GridLayout(1, false));
+		this.contentPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, false,
+				true, 1, 1));
 
-        this.crformPanel = new Group(this.contentPanel, SWT.NONE);
-        this.crformPanel.setText("Change Request Form");
-        this.crformPanel.setLayout(new GridLayout(4, false));
-        this.crformPanel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		this.crformPanel = new Group(this.contentPanel, SWT.NONE);
+		this.crformPanel.setText("Change Request Form");
+		this.crformPanel.setLayout(new GridLayout(4, false));
+		this.crformPanel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+				false, 1, 1));
 
-        this.componentLabel = new Label(this.crformPanel, SWT.NONE);
-        this.componentLabel.setAlignment(SWT.RIGHT);
-        GridData gd_componentLabel = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
-        gd_componentLabel.widthHint = 70;
-        this.componentLabel.setLayoutData(gd_componentLabel);
-        this.componentLabel.setText("Component :");
+		this.componentLabel = new Label(this.crformPanel, SWT.NONE);
+		this.componentLabel.setAlignment(SWT.RIGHT);
+		GridData gd_componentLabel = new GridData(SWT.RIGHT, SWT.CENTER, false,
+				false, 1, 1);
+		gd_componentLabel.widthHint = 70;
+		this.componentLabel.setLayoutData(gd_componentLabel);
+		this.componentLabel.setText("Component :");
+		
+		this.componentCombo = new Combo(this.crformPanel, SWT.NONE);
+		this.componentCombo.setItems(Constants.COMPONENT_LIST);
+		this.componentCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
-        this.componentText = new Text(this.crformPanel, SWT.BORDER);
-        this.componentText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		this.moduleLabel = new Label(this.crformPanel, SWT.NONE);
+		this.moduleLabel.setAlignment(SWT.RIGHT);
+		GridData gd_moduleLabel = new GridData(SWT.RIGHT, SWT.CENTER, false,
+				false, 1, 1);
+		gd_moduleLabel.widthHint = 70;
+		this.moduleLabel.setLayoutData(gd_moduleLabel);
+		this.moduleLabel.setText("Module :");
+		
+		this.moduleCombo = new Combo(this.crformPanel, SWT.NONE);
+		this.moduleCombo.setItems(Constants.MODULE_LIST);
+		this.moduleCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 
-        this.moduleLabel = new Label(this.crformPanel, SWT.NONE);
-        this.moduleLabel.setAlignment(SWT.RIGHT);
-        GridData gd_moduleLabel = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
-        gd_moduleLabel.widthHint = 70;
-        this.moduleLabel.setLayoutData(gd_moduleLabel);
-        this.moduleLabel.setText("Module :");
+		this.summaryLabel = new Label(this.crformPanel, SWT.NONE);
+		GridData gd_summaryLabel = new GridData(SWT.RIGHT, SWT.CENTER, false,
+				false, 1, 1);
+		gd_summaryLabel.widthHint = 70;
+		this.summaryLabel.setLayoutData(gd_summaryLabel);
+		this.summaryLabel.setAlignment(SWT.RIGHT);
+		this.summaryLabel.setText("Summary :");
 
-        this.moduleText = new Text(this.crformPanel, SWT.BORDER);
-        this.moduleText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		this.summaryText = new Text(this.crformPanel, SWT.BORDER | SWT.WRAP
+				| SWT.MULTI);
+		GridData gd_summaryText = new GridData(SWT.FILL, SWT.CENTER, true,
+				false, 3, 1);
+		gd_summaryText.heightHint = 75;
+		this.summaryText.setLayoutData(gd_summaryText);
 
-        this.summaryLabel = new Label(this.crformPanel, SWT.NONE);
-        GridData gd_summaryLabel = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
-        gd_summaryLabel.widthHint = 70;
-        this.summaryLabel.setLayoutData(gd_summaryLabel);
-        this.summaryLabel.setAlignment(SWT.RIGHT);
-        this.summaryLabel.setText("Summary :");
+		this.progressPanel = new Group(this.contentPanel, SWT.NONE);
+		this.progressPanel.setLayout(new GridLayout(1, false));
+		this.progressPanel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				false, false, 1, 1));
+		this.progressPanel.setText("Progress");
 
-        this.summaryText = new Text(this.crformPanel, SWT.BORDER | SWT.WRAP | SWT.MULTI);
-        GridData gd_summaryText = new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1);
-        gd_summaryText.heightHint = 75;
-        this.summaryText.setLayoutData(gd_summaryText);
+		this.progressNameLabel = new Label(this.progressPanel, SWT.NONE);
+		this.progressNameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				true, false, 1, 1));
+		this.progressNameLabel.setText("Progress Name");
 
-        this.progressPanel = new Group(this.contentPanel, SWT.NONE);
-        this.progressPanel.setLayout(new GridLayout(1, false));
-        this.progressPanel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-        this.progressPanel.setText("Progress");
+		this.progressBar = new ProgressBar(this.progressPanel, SWT.NONE);
+		this.progressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				false, false, 1, 1));
 
-        this.progressNameLabel = new Label(this.progressPanel, SWT.NONE);
-        this.progressNameLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-        this.progressNameLabel.setText("Progress Name");
+		this.ProgressDescriptionLabel = new Label(this.progressPanel, SWT.NONE);
+		GridData gd_ProgressDescriptionLabel = new GridData(SWT.FILL,
+				SWT.CENTER, false, false, 1, 1);
+		gd_ProgressDescriptionLabel.horizontalIndent = 10;
+		this.ProgressDescriptionLabel
+				.setLayoutData(gd_ProgressDescriptionLabel);
+		this.ProgressDescriptionLabel.setText("Progress Description");
 
-        this.progressBar = new ProgressBar(this.progressPanel, SWT.NONE);
-        this.progressBar.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+		this.tabFolder = new TabFolder(this.contentPanel, SWT.NONE);
+		this.tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+				true, 1, 1));
 
-        this.ProgressDescriptionLabel = new Label(this.progressPanel, SWT.NONE);
-        GridData gd_ProgressDescriptionLabel = new GridData(SWT.FILL, SWT.CENTER, false, false, 1,
-                1);
-        gd_ProgressDescriptionLabel.horizontalIndent = 10;
-        this.ProgressDescriptionLabel.setLayoutData(gd_ProgressDescriptionLabel);
-        this.ProgressDescriptionLabel.setText("Progress Description");
+		this.resourcesTabItem = new TabItem(this.tabFolder, SWT.NONE);
+		this.resourcesTabItem.setImage(SWTResourceManager.getImage(
+				MainWindow.class, "/icons/resource_hist.gif"));
+		this.resourcesTabItem.setText("Resources");
 
-        this.tabFolder = new TabFolder(this.contentPanel, SWT.NONE);
-        this.tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+		this.resourcesPanel = new Composite(this.tabFolder, SWT.NONE);
+		this.resourcesTabItem.setControl(this.resourcesPanel);
+		this.resourcesPanel.setLayout(new GridLayout(2, false));
 
-        this.resourcesTabItem = new TabItem(this.tabFolder, SWT.NONE);
-        this.resourcesTabItem.setImage(SWTResourceManager.getImage(MainWindow.class,
-                "/icons/resource_hist.gif"));
-        this.resourcesTabItem.setText("Resources");
+		this.fileLabel = new Label(this.resourcesPanel, SWT.NONE);
+		GridData gd_fileLabel = new GridData(SWT.RIGHT, SWT.CENTER, false,
+				false, 1, 1);
+		gd_fileLabel.horizontalIndent = 5;
+		gd_fileLabel.widthHint = 40;
+		this.fileLabel.setLayoutData(gd_fileLabel);
+		this.fileLabel.setText("File :");
 
-        this.resourcesPanel = new Composite(this.tabFolder, SWT.NONE);
-        this.resourcesTabItem.setControl(this.resourcesPanel);
-        this.resourcesPanel.setLayout(new GridLayout(2, false));
+		this.fileText = new Text(this.resourcesPanel, SWT.BORDER);
+		this.fileText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+				false, 1, 1));
 
-        this.fileLabel = new Label(this.resourcesPanel, SWT.NONE);
-        GridData gd_fileLabel = new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1);
-        gd_fileLabel.horizontalIndent = 5;
-        gd_fileLabel.widthHint = 40;
-        this.fileLabel.setLayoutData(gd_fileLabel);
-        this.fileLabel.setText("File :");
+		resourcesTableViewer = new TableViewer(this.resourcesPanel, SWT.BORDER
+				| SWT.FULL_SELECTION);
+		this.resourcesTable = resourcesTableViewer.getTable();
+		this.resourcesTable.setLinesVisible(true);
+		this.resourcesTable.setHeaderVisible(true);
+		this.resourcesTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL,
+				true, true, 2, 1));
 
-        this.fileText = new Text(this.resourcesPanel, SWT.BORDER);
-        this.fileText.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		this.resNoColumn = new TableColumn(this.resourcesTable, SWT.NONE);
+		this.resNoColumn.setWidth(50);
+		this.resNoColumn.setText("No");
 
-        resourcesTableViewer = new TableViewer(this.resourcesPanel, SWT.BORDER | SWT.FULL_SELECTION);
-        this.resourcesTable = resourcesTableViewer.getTable();
-        this.resourcesTable.setLinesVisible(true);
-        this.resourcesTable.setHeaderVisible(true);
-        this.resourcesTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
+		this.resourceColumn = new TableColumn(this.resourcesTable, SWT.NONE);
+		this.resourceColumn.setWidth(450);
+		this.resourceColumn.setText("Resource");
 
-        this.resNoColumn = new TableColumn(this.resourcesTable, SWT.NONE);
-        this.resNoColumn.setWidth(50);
-        this.resNoColumn.setText("No");
+		this.revisionColumn = new TableColumn(this.resourcesTable, SWT.NONE);
+		this.revisionColumn.setWidth(70);
+		this.revisionColumn.setText("Revision");
 
-        this.resourceColumn = new TableColumn(this.resourcesTable, SWT.NONE);
-        this.resourceColumn.setWidth(450);
-        this.resourceColumn.setText("Resource");
+		this.typeColumn = new TableColumn(this.resourcesTable, SWT.NONE);
+		this.typeColumn.setWidth(70);
+		this.typeColumn.setText("Type");
 
-        this.revisionColumn = new TableColumn(this.resourcesTable, SWT.NONE);
-        this.revisionColumn.setWidth(70);
-        this.revisionColumn.setText("Revision");
+		this.statusColumn = new TableColumn(this.resourcesTable, SWT.NONE);
+		this.statusColumn.setWidth(100);
+		this.statusColumn.setText("Status");
 
-        this.typeColumn = new TableColumn(this.resourcesTable, SWT.NONE);
-        this.typeColumn.setWidth(70);
-        this.typeColumn.setText("Type");
+		this.errorsTabItem = new TabItem(this.tabFolder, SWT.NONE);
+		this.errorsTabItem.setImage(SWTResourceManager.getImage(
+				MainWindow.class, "/icons/error.gif"));
+		this.errorsTabItem.setText("Errors");
 
-        this.statusColumn = new TableColumn(this.resourcesTable, SWT.NONE);
-        this.statusColumn.setWidth(100);
-        this.statusColumn.setText("Status");
+		this.errorsPanel = new Composite(this.tabFolder, SWT.NONE);
+		this.errorsTabItem.setControl(this.errorsPanel);
+		this.errorsPanel.setLayout(new GridLayout(1, false));
 
-        this.errorsTabItem = new TabItem(this.tabFolder, SWT.NONE);
-        this.errorsTabItem.setImage(SWTResourceManager.getImage(MainWindow.class,
-                "/icons/error.gif"));
-        this.errorsTabItem.setText("Errors");
+		this.errorStatusLabel = new Label(this.errorsPanel, SWT.NONE);
+		this.errorStatusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				true, false, 1, 1));
+		this.errorStatusLabel.setText("0 errors");
 
-        this.errorsPanel = new Composite(this.tabFolder, SWT.NONE);
-        this.errorsTabItem.setControl(this.errorsPanel);
-        this.errorsPanel.setLayout(new GridLayout(1, false));
+		errorsTableViewer = new TableViewer(this.errorsPanel, SWT.BORDER
+				| SWT.FULL_SELECTION);
+		this.errorsTable = errorsTableViewer.getTable();
+		this.errorsTable.setLinesVisible(true);
+		this.errorsTable.setHeaderVisible(true);
+		this.errorsTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true,
+				true, 1, 1));
 
-        this.errorStatusLabel = new Label(this.errorsPanel, SWT.NONE);
-        this.errorStatusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-        this.errorStatusLabel.setText("0 errors");
+		this.errNoColumn = new TableColumn(this.errorsTable, SWT.NONE);
+		this.errNoColumn.setWidth(50);
+		this.errNoColumn.setText("No");
 
-        errorsTableViewer = new TableViewer(this.errorsPanel, SWT.BORDER | SWT.FULL_SELECTION);
-        this.errorsTable = errorsTableViewer.getTable();
-        this.errorsTable.setLinesVisible(true);
-        this.errorsTable.setHeaderVisible(true);
-        this.errorsTable.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 1, 1));
+		this.errDescColumn = new TableColumn(this.errorsTable, SWT.NONE);
+		this.errDescColumn.setWidth(450);
+		this.errDescColumn.setText("Description");
 
-        this.errNoColumn = new TableColumn(this.errorsTable, SWT.NONE);
-        this.errNoColumn.setWidth(50);
-        this.errNoColumn.setText("No");
+		this.errResourceColumn = new TableColumn(this.errorsTable, SWT.NONE);
+		this.errResourceColumn.setWidth(200);
+		this.errResourceColumn.setText("Resource");
 
-        this.errDescColumn = new TableColumn(this.errorsTable, SWT.NONE);
-        this.errDescColumn.setWidth(450);
-        this.errDescColumn.setText("Description");
+		this.statusSepararot = new Label(this.shell, SWT.SEPARATOR
+				| SWT.HORIZONTAL);
+		this.statusSepararot.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				false, false, 1, 1));
 
-        this.errResourceColumn = new TableColumn(this.errorsTable, SWT.NONE);
-        this.errResourceColumn.setWidth(200);
-        this.errResourceColumn.setText("Resource");
+		this.statusPanel = new Composite(this.shell, SWT.NONE);
+		this.statusPanel.setLayout(new GridLayout(2, false));
+		this.statusPanel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				false, false, 1, 1));
 
-        this.statusSepararot = new Label(this.shell, SWT.SEPARATOR | SWT.HORIZONTAL);
-        this.statusSepararot.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+		this.statusLabel = new Label(this.statusPanel, SWT.NONE);
+		this.statusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true,
+				false, 1, 1));
 
-        this.statusPanel = new Composite(this.shell, SWT.NONE);
-        this.statusPanel.setLayout(new GridLayout(2, false));
-        this.statusPanel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+		this.connectionLabel = new Label(this.statusPanel, SWT.NONE);
+		this.connectionLabel.setAlignment(SWT.RIGHT);
+		this.connectionLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER,
+				true, false, 1, 1));
+		m_bindingContext = initDataBindings();
 
-        this.statusLabel = new Label(this.statusPanel, SWT.NONE);
-        this.statusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+	}
 
-        this.connectionLabel = new Label(this.statusPanel, SWT.NONE);
-        this.connectionLabel.setAlignment(SWT.RIGHT);
-        this.connectionLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
-        m_bindingContext = initDataBindings();
+	private void createToolBarPanel() {
+		this.toolBar = new ToolBar(this.shell, SWT.FLAT | SWT.RIGHT);
+		GridData gd_toolBar = new GridData(SWT.FILL, SWT.CENTER, true, false,
+				1, 1);
+		gd_toolBar.verticalIndent = 5;
+		gd_toolBar.horizontalIndent = 5;
+		this.toolBar.setLayoutData(gd_toolBar);
 
-    }
+		this.openToolItem = new ToolItem(this.toolBar, SWT.NONE);
+		this.openToolItem.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				FileDialog dialog = new FileDialog(shell, SWT.OPEN);
+				dialog.setFilterNames(new String[] { "Microsoft Excel Spreadsheet Files (*.xls)" });
+				dialog.setFilterExtensions(new String[] { "*.xls" });
+				String selectedFilename = dialog.open();
+				if (selectedFilename != null) {
+					changeRequest.setFile(selectedFilename);
+					runToolItem.setEnabled(true);
+					checkoutToolItem.setEnabled(true);
+				}
+			}
+		});
+		this.openToolItem.setImage(SWTResourceManager.getImage(
+				MainWindow.class, "/icons/fldr_obj.gif"));
+		this.openToolItem.setText("&Open");
 
-    private void createToolBarPanel() {
-        this.toolBar = new ToolBar(this.shell, SWT.FLAT | SWT.RIGHT);
-        GridData gd_toolBar = new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1);
-        gd_toolBar.verticalIndent = 5;
-        gd_toolBar.horizontalIndent = 5;
-        this.toolBar.setLayoutData(gd_toolBar);
+		this.checkoutToolItem = new ToolItem(this.toolBar, SWT.NONE);
+		this.checkoutToolItem.setEnabled(false);
+		this.checkoutToolItem.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				boolean flag = false;
+				String wcdir = config.getString(Configuration.Key.WORKSPACE_WC);
+				StringBuffer buf = new StringBuffer(wcdir);
+				buf.append("/").append(changeRequest.getComponent());
+				buf.append("/build/").append(changeRequest.getModule());
 
-        this.openToolItem = new ToolItem(this.toolBar, SWT.NONE);
-        this.openToolItem.addSelectionListener(new SelectionAdapter() {
-            public void widgetSelected(SelectionEvent e) {
-                FileDialog dialog = new FileDialog(shell, SWT.OPEN);
-                dialog.setFilterNames(new String[] { "Microsoft Excel Spreadsheet Files (*.xls)" });
-                dialog.setFilterExtensions(new String[] { "*.xls" });
-                String selectedFilename = dialog.open();
-                if (selectedFilename != null) {
-                    changeRequest.setFile(selectedFilename);
-                    runToolItem.setEnabled(true);
-                }
-            }
-        });
-        this.openToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
-                "/icons/fldr_obj.gif"));
-        this.openToolItem.setText("&Open");
+				File buildDirectory = new File(buf.toString());
+				if (buildDirectory.exists() == false) {
+					buildDirectory.mkdirs();
+					flag = true;
+				} else {
+					SvnClient svnClient = SvnClientImpl.getClient();
+					try {
+						flag = !svnClient.isWorkingCopyRoot(buildDirectory);
+					} catch (SVNException e1) {
+						e1.printStackTrace();
+					}
+				}
 
-        this.runToolItem = new ToolItem(this.toolBar, SWT.NONE);
-        this.runToolItem.addSelectionListener(new SelectionAdapter() {
-            public void widgetSelected(SelectionEvent e) {
-                if (log.isInfoEnabled()) {
-                    log.info("initialize Work Phase Context...");
-                }
-                phaseContext.initialize();
-                new Thread(new RunAsyncExecutor(phaseContext)).start();
-            }
-        });
-        this.runToolItem.setEnabled(false);
-        this.runToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
-                "/icons/start_task.gif"));
-        this.runToolItem.setText("&Run");
+				if (flag) {
+					CheckoutDialog dialog = new CheckoutDialog(shell, SWT.NONE,
+							phaseContext);
+					dialog.open();
+				} else {
+					MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION);
+					messageBox.setText("Checkout Information");
+					messageBox.setMessage("이미 Checkout 했습니다.");
+					messageBox.open();
+				}
+			}
+		});
+		this.checkoutToolItem.setImage(SWTResourceManager.getImage(
+				MainWindow.class, "/icons/update.gif"));
+		this.checkoutToolItem.setText("&Checkout");
 
-        new ToolItem(this.toolBar, SWT.SEPARATOR);
+		this.runToolItem = new ToolItem(this.toolBar, SWT.NONE);
+		this.runToolItem.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				if (log.isInfoEnabled()) {
+					log.info("initialize Work Phase Context...");
+				}
+				phaseContext.initialize();
+				ViewHolder viewHolder = new ViewHolder();
+				viewHolder.setDisplay(Display.getCurrent());
+				viewHolder.setShell(shell);
+				phaseContext.setViewHolder(viewHolder);
+				new Thread(new RunAsyncExecutor(phaseContext)).start();
+			}
+		});
+		this.runToolItem.setEnabled(false);
+		this.runToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
+				"/icons/start_task.gif"));
+		this.runToolItem.setText("&Run");
 
-        this.prefToolItem = new ToolItem(this.toolBar, SWT.NONE);
-        this.prefToolItem.addSelectionListener(new SelectionAdapter() {
-            public void widgetSelected(SelectionEvent e) {
-                PreferencesDialog dialog = new PreferencesDialog(shell, SWT.OPEN);
-                dialog.open();
-            }
-        });
-        this.prefToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
-                "/icons/config_obj.gif"));
-        this.prefToolItem.setText("&Preferences");
+		new ToolItem(this.toolBar, SWT.SEPARATOR);
 
-        new ToolItem(this.toolBar, SWT.SEPARATOR);
+		this.prefToolItem = new ToolItem(this.toolBar, SWT.NONE);
+		this.prefToolItem.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				PreferencesDialog dialog = new PreferencesDialog(shell,
+						SWT.OPEN);
+				dialog.open();
+			}
+		});
+		this.prefToolItem.setImage(SWTResourceManager.getImage(
+				MainWindow.class, "/icons/config_obj.gif"));
+		this.prefToolItem.setText("&Preferences");
 
-        this.exitToolItem = new ToolItem(this.toolBar, SWT.NONE);
-        this.exitToolItem.addSelectionListener(new SelectionAdapter() {
-            public void widgetSelected(SelectionEvent e) {
-                shell.close();
-            }
-        });
-        this.exitToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
-                "/icons/rem_co.gif"));
-        this.exitToolItem.setText("E&xit");
-    }
+		new ToolItem(this.toolBar, SWT.SEPARATOR);
 
-    protected DataBindingContext initDataBindings() {
-        DataBindingContext bindingContext = new DataBindingContext();
-        //
-        IObservableValue changeRequestFileObserveValue = BeansObservables.observeValue(
-                changeRequest, "file");
-        IObservableValue fileTextObserveTextObserveWidget = SWTObservables.observeText(fileText,
-                SWT.Modify);
-        bindingContext.bindValue(changeRequestFileObserveValue, fileTextObserveTextObserveWidget,
-                null, null);
-        //
-        IObservableValue changeRequestComponentObserveValue = BeansObservables.observeValue(
-                changeRequest, "component");
-        IObservableValue componentTextObserveTextObserveWidget = SWTObservables.observeText(
-                componentText, SWT.Modify);
-        bindingContext.bindValue(changeRequestComponentObserveValue,
-                componentTextObserveTextObserveWidget, null, null);
-        //
-        IObservableValue changeRequestModuleObserveValue = BeansObservables.observeValue(
-                changeRequest, "module");
-        IObservableValue moduleTextObserveTextObserveWidget = SWTObservables.observeText(
-                moduleText, SWT.Modify);
-        bindingContext.bindValue(changeRequestModuleObserveValue,
-                moduleTextObserveTextObserveWidget, null, null);
-        //
-        IObservableValue changeRequestSummaryObserveValue = BeansObservables.observeValue(
-                changeRequest, "summary");
-        IObservableValue summaryTextObserveTextObserveWidget = SWTObservables.observeText(
-                summaryText, SWT.Modify);
-        bindingContext.bindValue(changeRequestSummaryObserveValue,
-                summaryTextObserveTextObserveWidget, null, null);
-        //
-        ObservableListContentProvider listContentProvider = new ObservableListContentProvider();
-        resourcesTableViewer.setContentProvider(listContentProvider);
-        //
-        IObservableMap[] observeMaps = BeansObservables.observeMaps(
-                listContentProvider.getKnownElements(), ChangeRequestResource.class, new String[] {
-                        "no", "resource", "revision", "type", "status" });
-        resourcesTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps));
-        //
-        IObservableList changeRequestResourcesObserveList = BeansObservables.observeList(
-                Realm.getDefault(), changeRequest, "resources");
-        resourcesTableViewer.setInput(changeRequestResourcesObserveList);
-        //
-        IObservableValue phaseContextPhaseNameObserveValue = BeansObservables.observeValue(
-                phaseContext, "phaseName");
-        IObservableValue progressNameLabelObserveTextObserveWidget = SWTObservables
-                .observeText(progressNameLabel);
-        bindingContext.bindValue(phaseContextPhaseNameObserveValue,
-                progressNameLabelObserveTextObserveWidget, null, null);
-        //
-        IObservableValue phaseContextPhaseDescriptionObserveValue = BeansObservables.observeValue(
-                phaseContext, "phaseDescription");
-        IObservableValue progressDescriptionLabelObserveTextObserveWidget = SWTObservables
-                .observeText(ProgressDescriptionLabel);
-        bindingContext.bindValue(phaseContextPhaseDescriptionObserveValue,
-                progressDescriptionLabelObserveTextObserveWidget, null, null);
-        //
-        ObservableListContentProvider listContentProvider_1 = new ObservableListContentProvider();
-        errorsTableViewer.setContentProvider(listContentProvider_1);
-        //
-        IObservableMap[] observeMaps_1 = BeansObservables.observeMaps(
-                listContentProvider_1.getKnownElements(), ErrorDescription.class, new String[] {
-                        "no", "description", "resource" });
-        errorsTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps_1));
-        //
-        IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(
-                Realm.getDefault(), phaseContext, "errors");
-        errorsTableViewer.setInput(phaseContextErrorsObserveList);
-        //
-        IObservableValue changeRequestConnectionUrlObserveValue = BeansObservables.observeValue(
-                changeRequest, "connectionUrl");
-        IObservableValue connectionLabelObserveTextObserveWidget = SWTObservables
-                .observeText(connectionLabel);
-        bindingContext.bindValue(changeRequestConnectionUrlObserveValue,
-                connectionLabelObserveTextObserveWidget, null, null);
-        //
-        return bindingContext;
-    }
+		this.exitToolItem = new ToolItem(this.toolBar, SWT.NONE);
+		this.exitToolItem.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				shell.close();
+			}
+		});
+		this.exitToolItem.setImage(SWTResourceManager.getImage(
+				MainWindow.class, "/icons/rem_co.gif"));
+		this.exitToolItem.setText("E&xit");
+	}
+	protected DataBindingContext initDataBindings() {
+		DataBindingContext bindingContext = new DataBindingContext();
+		//
+		IObservableValue changeRequestFileObserveValue = BeansObservables.observeValue(changeRequest, "file");
+		IObservableValue fileTextObserveTextObserveWidget = SWTObservables.observeText(fileText, SWT.Modify);
+		bindingContext.bindValue(changeRequestFileObserveValue, fileTextObserveTextObserveWidget, null, null);
+		//
+		IObservableValue changeRequestSummaryObserveValue = BeansObservables.observeValue(changeRequest, "summary");
+		IObservableValue summaryTextObserveTextObserveWidget = SWTObservables.observeText(summaryText, SWT.Modify);
+		bindingContext.bindValue(changeRequestSummaryObserveValue, summaryTextObserveTextObserveWidget, null, null);
+		//
+		ObservableListContentProvider listContentProvider = new ObservableListContentProvider();
+		resourcesTableViewer.setContentProvider(listContentProvider);
+		//
+		IObservableMap[] observeMaps = BeansObservables.observeMaps(listContentProvider.getKnownElements(), ChangeRequestResource.class, new String[]{"no", "resource", "revision", "type", "status"});
+		resourcesTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps));
+		//
+		IObservableList changeRequestResourcesObserveList = BeansObservables.observeList(Realm.getDefault(), changeRequest, "resources");
+		resourcesTableViewer.setInput(changeRequestResourcesObserveList);
+		//
+		IObservableValue phaseContextPhaseNameObserveValue = BeansObservables.observeValue(phaseContext, "phaseName");
+		IObservableValue progressNameLabelObserveTextObserveWidget = SWTObservables.observeText(progressNameLabel);
+		bindingContext.bindValue(phaseContextPhaseNameObserveValue, progressNameLabelObserveTextObserveWidget, null, null);
+		//
+		IObservableValue phaseContextPhaseDescriptionObserveValue = BeansObservables.observeValue(phaseContext, "phaseDescription");
+		IObservableValue progressDescriptionLabelObserveTextObserveWidget = SWTObservables.observeText(ProgressDescriptionLabel);
+		bindingContext.bindValue(phaseContextPhaseDescriptionObserveValue, progressDescriptionLabelObserveTextObserveWidget, null, null);
+		//
+		ObservableListContentProvider listContentProvider_1 = new ObservableListContentProvider();
+		errorsTableViewer.setContentProvider(listContentProvider_1);
+		//
+		IObservableMap[] observeMaps_1 = BeansObservables.observeMaps(listContentProvider_1.getKnownElements(), ErrorDescription.class, new String[]{"no", "description", "resource"});
+		errorsTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps_1));
+		//
+		IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(Realm.getDefault(), phaseContext, "errors");
+		errorsTableViewer.setInput(phaseContextErrorsObserveList);
+		//
+		IObservableValue changeRequestConnectionUrlObserveValue = BeansObservables.observeValue(changeRequest, "connectionUrl");
+		IObservableValue connectionLabelObserveTextObserveWidget = SWTObservables.observeText(connectionLabel);
+		bindingContext.bindValue(changeRequestConnectionUrlObserveValue, connectionLabelObserveTextObserveWidget, null, null);
+		//
+		IObservableValue changeRequestModuleSelectObserveValue = BeansObservables.observeValue(changeRequest, "moduleSelect");
+		IObservableValue moduleComboObserveSingleSelectionIndexObserveWidget_1 = SWTObservables.observeSingleSelectionIndex(moduleCombo);
+		bindingContext.bindValue(changeRequestModuleSelectObserveValue, moduleComboObserveSingleSelectionIndexObserveWidget_1, null, null);
+		//
+		IObservableValue changeRequestComponentSelectObserveValue = BeansObservables.observeValue(changeRequest, "componentSelect");
+		IObservableValue componentComboObserveSingleSelectionIndexObserveWidget = SWTObservables.observeSingleSelectionIndex(componentCombo);
+		bindingContext.bindValue(changeRequestComponentSelectObserveValue, componentComboObserveSingleSelectionIndexObserveWidget, null, null);
+		//
+		IObservableValue moduleComboObserveTextObserveWidget = SWTObservables.observeText(moduleCombo);
+		IObservableValue changeRequestModuleObserveValue = BeansObservables.observeValue(changeRequest, "module");
+		bindingContext.bindValue(moduleComboObserveTextObserveWidget, changeRequestModuleObserveValue, null, null);
+		//
+		IObservableValue componentComboObserveTextObserveWidget = SWTObservables.observeText(componentCombo);
+		IObservableValue changeRequestComponentObserveValue = BeansObservables.observeValue(changeRequest, "component");
+		bindingContext.bindValue(componentComboObserveTextObserveWidget, changeRequestComponentObserveValue, null, null);
+		//
+		return bindingContext;
+	}
 }

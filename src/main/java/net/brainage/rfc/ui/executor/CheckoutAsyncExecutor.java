@@ -1,15 +1,19 @@
 /*
- * (#) net.brainage.rfc.phase.impl.CheckoutWorkPhaseChain.java
- * Created on 2011. 6. 20.
+ * (#) net.brainage.rfc.ui.executor.CheckoutAsyncExecutor.java
+ * Created on 2011. 6. 21.
  */
-package net.brainage.rfc.phase.impl;
+package net.brainage.rfc.ui.executor;
 
 import java.io.File;
 
 import net.brainage.rfc.config.Configuration;
 import net.brainage.rfc.model.ChangeRequest;
+import net.brainage.rfc.model.CheckoutModel;
+import net.brainage.rfc.model.SvnResource;
 import net.brainage.rfc.model.WorkPhaseContext;
-import net.brainage.rfc.phase.WorkPhaseChain;
+import net.brainage.rfc.phase.impl.CheckoutWorkPhaseChain;
+import net.brainage.rfc.ui.AsyncExecutor;
+import net.brainage.rfc.util.StringUtils;
 import net.brainage.rfc.util.svn.SvnClient;
 import net.brainage.rfc.util.svn.SvnClientImpl;
 
@@ -19,7 +23,6 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 /**
  * 
@@ -27,23 +30,20 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
  * @author ms29.seo@gmail.com
  * @version 1.0
  */
-public class CheckoutWorkPhaseChain extends WorkPhaseChain
+public class CheckoutAsyncExecutor extends AsyncExecutor
 {
 
     private static final Logger log = LoggerFactory.getLogger(CheckoutWorkPhaseChain.class);
 
-    private static final String WORKPHASE_NAME = "CheckoutWorkPhase";
+    private CheckoutModel model;
 
-    /* (non-Javadoc)
-     * @see net.brainage.rfc.phase.WorkPhase#getName()
-     */
-    public String getName() {
-        return WORKPHASE_NAME;
+    public CheckoutAsyncExecutor(WorkPhaseContext _context, CheckoutModel _model) {
+        super(_context);
+        this.model = _model;
     }
 
-    protected void internalProcess(final WorkPhaseContext context) {
-        context.setPhaseDescription("check working copy directory...");
-
+    protected void internalProcess() {
+        WorkPhaseContext context = getContext();
         ChangeRequest changeRequest = context.getChangeRequest();
         Configuration config = Configuration.getInstance();
 
@@ -70,25 +70,37 @@ public class CheckoutWorkPhaseChain extends WorkPhaseChain
         try {
             // build directory가 버전 관리가 되는 디렉토리가 아니라면 checkout
             if (svnClient.isWorkingCopyRoot(buildDirectory) == false) {
+                model.setTopIndex(-1);
+                model.clearResources();
                 String urlPath = changeRequest.getConnectionUrl();
                 svnClient.checkout(urlPath, buildDirectory, new ISVNEventHandler() {
                     public void checkCancelled() throws SVNCancelException {
+                    	if ( log.isInfoEnabled()) {
+                    		log.info("#### called checkCancelled()");
+                    	}
                     }
 
                     public void handleEvent(SVNEvent event, double progress) throws SVNException {
-                        SVNEventAction eventAction = event.getAction();
-                        File eventFile = event.getFile();
-                        String msg = "[" + eventAction.toString() + "] checkout '"
-                                + eventFile.getAbsolutePath() + "'.";
-                        context.setPhaseDescription(msg);
+                        String action = event.getAction().toString();
+                        String path = event.getFile().getAbsolutePath();
+                        String mimeType = event.getMimeType();
+                        if (StringUtils.isEmpty(mimeType)) {
+                            mimeType = StringUtils.EMPTY;
+                        }
+
+                        SvnResource r = new SvnResource();
+                        r.setAction(action);
+                        r.setPath(path);
+                        r.setMimeType(mimeType);
+                        model.addResource(r);
+                        model.setTopIndex(model.getTopIndex() + 1);
                     }
                 });
             } else {
                 // TODO: 버전 관리가 되고 있다면 Update를 한다.
             }
         } catch (SVNException e) {
-            context.addError(getName(), e.getMessage());
+            context.addError("CheckoutAsyncExecutor", e.getMessage());
         }
     }
-
 }

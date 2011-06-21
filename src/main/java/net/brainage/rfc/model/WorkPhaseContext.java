@@ -30,6 +30,8 @@ public class WorkPhaseContext extends AbstractModelObject
     private String phaseDescription;
     private List<ErrorDescription> errors = new ArrayList<ErrorDescription>();
 
+    private ViewHolder viewHolder;
+
     /**
      * 
      */
@@ -132,6 +134,20 @@ public class WorkPhaseContext extends AbstractModelObject
      */
     public boolean hasErrors() {
         return (this.errors.size() > 0);
+    }
+
+    /**
+     * @return the viewHolder
+     */
+    public ViewHolder getViewHolder() {
+        return viewHolder;
+    }
+
+    /**
+     * @param viewHolder the viewHolder to set
+     */
+    public void setViewHolder(ViewHolder viewHolder) {
+        this.viewHolder = viewHolder;
     }
 
     /**
