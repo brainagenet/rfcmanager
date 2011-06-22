@@ -18,7 +18,7 @@ public class WorkPhaseChainFactory
 
     private static final Logger log = LoggerFactory.getLogger(WorkPhaseChainFactory.class);
 
-    private static String[] CHAIN_CLASSES = new String[] { "net.brainage.rfc.phase.impl.CheckoutWorkPhaseChain" };
+    private static String[] CHAIN_CLASSES = new String[] { "net.brainage.rfc.phase.impl.SvnDiffWorkPhaseChain" };
 
     private static WorkPhaseChain phaseChain;
 
@@ -26,20 +26,20 @@ public class WorkPhaseChainFactory
     }
 
     public static WorkPhaseChain getWorkPhaseChain() throws Exception {
-        if (phaseChain != null) {
-            if (log.isDebugEnabled()) {
+        if ( phaseChain != null ) {
+            if ( log.isDebugEnabled() ) {
                 log.debug("already instantiated then return static instance...");
             }
             return phaseChain;
         }
 
         WorkPhaseChain previous = null, current = null;
-        for (String chainClazz : CHAIN_CLASSES) {
-            if (log.isDebugEnabled()) {
+        for ( String chainClazz : CHAIN_CLASSES ) {
+            if ( log.isDebugEnabled() ) {
                 log.debug("chain class: " + chainClazz);
             }
             current = (WorkPhaseChain) Class.forName(chainClazz).newInstance();
-            if (phaseChain == null) {
+            if ( phaseChain == null ) {
                 phaseChain = current;
                 previous = phaseChain;
                 continue;

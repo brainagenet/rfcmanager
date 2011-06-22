@@ -30,6 +30,9 @@ public class WorkPhaseContext extends AbstractModelObject
     private String phaseDescription;
     private List<ErrorDescription> errors = new ArrayList<ErrorDescription>();
 
+    private int progressMax;
+    private int progressSelection = 0;
+
     private ViewHolder viewHolder;
 
     /**
@@ -37,6 +40,8 @@ public class WorkPhaseContext extends AbstractModelObject
      */
     public WorkPhaseContext(ChangeRequest changeRequest) {
         this.changeRequest = changeRequest;
+
+        this.progressMax = this.changeRequest.sizeOfResources();
     }
 
     /**
@@ -151,12 +156,46 @@ public class WorkPhaseContext extends AbstractModelObject
     }
 
     /**
+     * @return the progressMax
+     */
+    public int getProgressMax() {
+        return progressMax;
+    }
+
+    /**
+     * @param progressMax the progressMax to set
+     */
+    public void setProgressMax(int progressMax) {
+        int oldValue = this.progressMax;
+        this.progressMax = progressMax;
+        firePropertyChange("progressMax", oldValue, this.progressMax);
+    }
+
+    /**
+     * @return the progressSelection
+     */
+    public int getProgressSelection() {
+        return progressSelection;
+    }
+
+    /**
+     * @param progressSelection the progressSelection to set
+     */
+    public void setProgressSelection(int progressSelection) {
+        int oldValue = this.progressSelection;
+        this.progressSelection = progressSelection;
+        firePropertyChange("progressSelection", oldValue, this.progressSelection);
+    }
+
+    /**
      * 
      */
     public void initialize() {
         setPhaseName(null);
         setPhaseDescription(null);
         clearErrors();
+        setProgressMax(this.changeRequest.sizeOfResources());
+        setProgressSelection(0);
     }
 
 }

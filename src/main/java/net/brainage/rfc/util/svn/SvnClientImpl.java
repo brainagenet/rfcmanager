@@ -6,6 +6,9 @@ package net.brainage.rfc.util.svn;
 
 import java.io.File;
 
+import net.brainage.rfc.util.svn.handler.AbstractSvnDiffStatusHandler;
+import net.brainage.rfc.util.svn.handler.DefaultSvnDiffStatusHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -13,13 +16,14 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
  * 
- *
+ * 
  * @author ms29.seo@gmail.com
  * @version 1.0
  */
@@ -56,8 +60,11 @@ public class SvnClientImpl implements SvnClient
         return svnClient;
     }
 
-    /* (non-Javadoc)
-     * @see net.brainage.crmanager.svn.SvnClient#checkout(java.lang.String, java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see net.brainage.crmanager.svn.SvnClient#checkout(java.lang.String,
+     * java.lang.String)
      */
     public void checkout(String urlPath, String destPath) throws SVNException {
         checkout(urlPath, new File(destPath), null);
@@ -69,44 +76,68 @@ public class SvnClientImpl implements SvnClient
 
     public void checkout(String urlPath, File destPath, ISVNEventHandler handler)
             throws SVNException {
-        if (log.isInfoEnabled()) {
+        if ( log.isInfoEnabled() ) {
             log.info("checkout '{}' to '{}'...", urlPath, destPath);
         }
         SVNUpdateClient updateClient = svnClientManager.getUpdateClient();
-        if (handler != null) {
+        if ( handler != null ) {
             updateClient.setEventHandler(handler);
         }
 
         SVNURL url = SVNURL.parseURIDecoded(urlPath);
         updateClient.doCheckout(url, destPath, SVNRevision.HEAD, SVNRevision.HEAD,
-                SVNDepth.INFINITY,
-                true);
+                SVNDepth.INFINITY, true);
     }
 
-    /* (non-Javadoc)
-     * @see net.brainage.crmanager.svn.SvnClient#isVersionedDirectory(java.lang.String)
+    public char diffStatus(String urlPath1, long urlPath1Revision, String urlPath2,
+            AbstractSvnDiffStatusHandler handler) throws SVNException {
+
+        SVNURL url1 = SVNURL.parseURIDecoded(urlPath1);
+        SVNRevision revision1 = SVNRevision.create(urlPath1Revision);
+        SVNURL url2 = SVNURL.parseURIDecoded(urlPath2);
+
+        SVNDiffClient diffClient = svnClientManager.getDiffClient();
+        if ( handler == null) {
+            handler = new DefaultSvnDiffStatusHandler();
+        }
+        
+        diffClient.doDiffStatus(url1, revision1, url2, SVNRevision.HEAD,
+                SVNDepth.IMMEDIATES, false, handler);
+        
+        return handler.getModificationType();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * net.brainage.crmanager.svn.SvnClient#isVersionedDirectory(java.lang.String
+     * )
      */
     public boolean isVersionedDirectory(String path) {
-        if (log.isInfoEnabled()) {
+        if ( log.isInfoEnabled() ) {
             log.info("isVersionedDirectory({})", path);
         }
         return isVersionedDirectory(new File(path));
     }
 
-    /* (non-Javadoc)
-     * @see net.brainage.crmanager.svn.SvnClient#isVersionedDirectory(java.io.File)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * net.brainage.crmanager.svn.SvnClient#isVersionedDirectory(java.io.File)
      */
     public boolean isVersionedDirectory(File path) {
-        if (log.isInfoEnabled()) {
+        if ( log.isInfoEnabled() ) {
             log.info("isVersionedDirectory({})", path.getAbsolutePath());
         }
 
-        if (path.exists() == false) {
+        if ( path.exists() == false ) {
             throw new IllegalStateException("Input file '" + path.getAbsoluteFile()
                     + "' dose not exist.");
         }
 
-        if (path.isDirectory() == false) {
+        if ( path.isDirectory() == false ) {
             throw new IllegalStateException("Input file '" + path.getAbsoluteFile()
                     + "' is not directory.");
         }
@@ -117,10 +148,10 @@ public class SvnClientImpl implements SvnClient
     /**
      * @param rootPath
      * @return
-     * @throws SVNException 
+     * @throws SVNException
      */
     public boolean isWorkingCopyRoot(String rootPath) throws SVNException {
-        if (log.isInfoEnabled()) {
+        if ( log.isInfoEnabled() ) {
             log.info("isWorkingCopyRoot({})", rootPath);
         }
         return isWorkingCopyRoot(new File(rootPath));
@@ -129,19 +160,19 @@ public class SvnClientImpl implements SvnClient
     /**
      * @param rootPath
      * @return
-     * @throws SVNException 
+     * @throws SVNException
      */
     public boolean isWorkingCopyRoot(File rootPath) throws SVNException {
-        if (log.isInfoEnabled()) {
+        if ( log.isInfoEnabled() ) {
             log.info("isWorkingCopyRoot({})", rootPath.getAbsolutePath());
         }
 
-        if (rootPath.exists() == false) {
+        if ( rootPath.exists() == false ) {
             throw new IllegalStateException("Input file '" + rootPath.getAbsoluteFile()
                     + "' dose not exist.");
         }
 
-        if (rootPath.isDirectory() == false) {
+        if ( rootPath.isDirectory() == false ) {
             throw new IllegalStateException("Input file '" + rootPath.getAbsoluteFile()
                     + "' is not directory.");
         }

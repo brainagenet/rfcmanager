@@ -15,6 +15,7 @@ public class ChangeRequestResource extends AbstractModelObject
     private long revision;
     private String type;
     private String status;
+    private char modType;
 
     /**
      * 
@@ -100,6 +101,20 @@ public class ChangeRequestResource extends AbstractModelObject
         String oldValue = this.status;
         this.status = status;
         firePropertyChange("status", oldValue, this.status);
+    }
+
+    /**
+     * @return the modType
+     */
+    public char getModType() {
+        return modType;
+    }
+
+    /**
+     * @param modType the modType to set
+     */
+    public void setModType(char modType) {
+        this.modType = modType;
     }
 
 }
