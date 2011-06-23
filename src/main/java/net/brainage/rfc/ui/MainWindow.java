@@ -16,6 +16,7 @@ import net.brainage.rfc.model.ViewHolder;
 import net.brainage.rfc.model.WorkPhaseContext;
 import net.brainage.rfc.ui.event.ConnectionUrlChangeListener;
 import net.brainage.rfc.ui.event.FilePropertyChangeListener;
+import net.brainage.rfc.ui.event.PathGenerationListener;
 import net.brainage.rfc.ui.executor.RunAsyncExecutor;
 import net.brainage.rfc.util.svn.SvnClient;
 import net.brainage.rfc.util.svn.SvnClientImpl;
@@ -167,7 +168,8 @@ public class MainWindow
         PropertyChangeListener listener = new FilePropertyChangeListener(changeRequest);
         this.changeRequest.addPropertyChangeListener("file", listener);
         
-        listener = new ConnectionUrlChangeListener(changeRequest);
+        // listener = new ConnectionUrlChangeListener(changeRequest);
+        listener = new PathGenerationListener(phaseContext);
         this.changeRequest.addPropertyChangeListener("component", listener);
         this.changeRequest.addPropertyChangeListener("module", listener);
     }
@@ -501,110 +503,66 @@ public class MainWindow
                 "/icons/rem_co.gif"));
         this.exitToolItem.setText("E&xit");
     }
-
     protected DataBindingContext initDataBindings() {
         DataBindingContext bindingContext = new DataBindingContext();
         //
-        IObservableValue changeRequestFileObserveValue = BeansObservables.observeValue(
-                changeRequest, "file");
-        IObservableValue fileTextObserveTextObserveWidget = SWTObservables.observeText(fileText,
-                SWT.Modify);
-        bindingContext.bindValue(changeRequestFileObserveValue, fileTextObserveTextObserveWidget,
-                null, null);
+        IObservableValue changeRequestFileObserveValue = BeansObservables.observeValue(changeRequest, "file");
+        IObservableValue fileTextObserveTextObserveWidget = SWTObservables.observeText(fileText, SWT.Modify);
+        bindingContext.bindValue(changeRequestFileObserveValue, fileTextObserveTextObserveWidget, null, null);
         //
-        IObservableValue changeRequestSummaryObserveValue = BeansObservables.observeValue(
-                changeRequest, "summary");
-        IObservableValue summaryTextObserveTextObserveWidget = SWTObservables.observeText(
-                summaryText, SWT.Modify);
-        bindingContext.bindValue(changeRequestSummaryObserveValue,
-                summaryTextObserveTextObserveWidget, null, null);
+        IObservableValue changeRequestSummaryObserveValue = BeansObservables.observeValue(changeRequest, "summary");
+        IObservableValue summaryTextObserveTextObserveWidget = SWTObservables.observeText(summaryText, SWT.Modify);
+        bindingContext.bindValue(changeRequestSummaryObserveValue, summaryTextObserveTextObserveWidget, null, null);
         //
         ObservableListContentProvider listContentProvider = new ObservableListContentProvider();
         resourcesTableViewer.setContentProvider(listContentProvider);
         //
-        IObservableMap[] observeMaps = BeansObservables.observeMaps(
-                listContentProvider.getKnownElements(), ChangeRequestResource.class, new String[] {
-                        "no", "resource", "revision", "type", "status" });
+        IObservableMap[] observeMaps = BeansObservables.observeMaps(listContentProvider.getKnownElements(), ChangeRequestResource.class, new String[]{"no", "resource", "revision", "type", "status"});
         resourcesTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps));
         //
-        IObservableList changeRequestResourcesObserveList = BeansObservables.observeList(
-                Realm.getDefault(), changeRequest, "resources");
+        IObservableList changeRequestResourcesObserveList = BeansObservables.observeList(Realm.getDefault(), changeRequest, "resources");
         resourcesTableViewer.setInput(changeRequestResourcesObserveList);
         //
-        IObservableValue phaseContextPhaseNameObserveValue = BeansObservables.observeValue(
-                phaseContext, "phaseName");
-        IObservableValue progressNameLabelObserveTextObserveWidget = SWTObservables
-                .observeText(progressNameLabel);
-        bindingContext.bindValue(phaseContextPhaseNameObserveValue,
-                progressNameLabelObserveTextObserveWidget, null, null);
+        IObservableValue phaseContextPhaseNameObserveValue = BeansObservables.observeValue(phaseContext, "phaseName");
+        IObservableValue progressNameLabelObserveTextObserveWidget = SWTObservables.observeText(progressNameLabel);
+        bindingContext.bindValue(phaseContextPhaseNameObserveValue, progressNameLabelObserveTextObserveWidget, null, null);
         //
-        IObservableValue phaseContextPhaseDescriptionObserveValue = BeansObservables.observeValue(
-                phaseContext, "phaseDescription");
-        IObservableValue progressDescriptionLabelObserveTextObserveWidget = SWTObservables
-                .observeText(ProgressDescriptionLabel);
-        bindingContext.bindValue(phaseContextPhaseDescriptionObserveValue,
-                progressDescriptionLabelObserveTextObserveWidget, null, null);
+        IObservableValue phaseContextPhaseDescriptionObserveValue = BeansObservables.observeValue(phaseContext, "phaseDescription");
+        IObservableValue progressDescriptionLabelObserveTextObserveWidget = SWTObservables.observeText(ProgressDescriptionLabel);
+        bindingContext.bindValue(phaseContextPhaseDescriptionObserveValue, progressDescriptionLabelObserveTextObserveWidget, null, null);
         //
         ObservableListContentProvider listContentProvider_1 = new ObservableListContentProvider();
         errorsTableViewer.setContentProvider(listContentProvider_1);
         //
-        IObservableMap[] observeMaps_1 = BeansObservables.observeMaps(
-                listContentProvider_1.getKnownElements(), ErrorDescription.class, new String[] {
-                        "no", "description", "resource" });
+        IObservableMap[] observeMaps_1 = BeansObservables.observeMaps(listContentProvider_1.getKnownElements(), ErrorDescription.class, new String[]{"no", "description", "resource"});
         errorsTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps_1));
         //
-        IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(
-                Realm.getDefault(), phaseContext, "errors");
+        IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(Realm.getDefault(), phaseContext, "errors");
         errorsTableViewer.setInput(phaseContextErrorsObserveList);
         //
-        IObservableValue changeRequestConnectionUrlObserveValue = BeansObservables.observeValue(
-                changeRequest, "connectionUrl");
-        IObservableValue connectionLabelObserveTextObserveWidget = SWTObservables
-                .observeText(connectionLabel);
-        bindingContext.bindValue(changeRequestConnectionUrlObserveValue,
-                connectionLabelObserveTextObserveWidget, null, null);
+        IObservableValue changeRequestModuleSelectObserveValue = BeansObservables.observeValue(changeRequest, "moduleSelect");
+        IObservableValue moduleComboObserveSingleSelectionIndexObserveWidget_1 = SWTObservables.observeSingleSelectionIndex(moduleCombo);
+        bindingContext.bindValue(changeRequestModuleSelectObserveValue, moduleComboObserveSingleSelectionIndexObserveWidget_1, null, null);
         //
-        IObservableValue changeRequestModuleSelectObserveValue = BeansObservables.observeValue(
-                changeRequest, "moduleSelect");
-        IObservableValue moduleComboObserveSingleSelectionIndexObserveWidget_1 = SWTObservables
-                .observeSingleSelectionIndex(moduleCombo);
-        bindingContext.bindValue(changeRequestModuleSelectObserveValue,
-                moduleComboObserveSingleSelectionIndexObserveWidget_1, null, null);
+        IObservableValue changeRequestComponentSelectObserveValue = BeansObservables.observeValue(changeRequest, "componentSelect");
+        IObservableValue componentComboObserveSingleSelectionIndexObserveWidget = SWTObservables.observeSingleSelectionIndex(componentCombo);
+        bindingContext.bindValue(changeRequestComponentSelectObserveValue, componentComboObserveSingleSelectionIndexObserveWidget, null, null);
         //
-        IObservableValue changeRequestComponentSelectObserveValue = BeansObservables.observeValue(
-                changeRequest, "componentSelect");
-        IObservableValue componentComboObserveSingleSelectionIndexObserveWidget = SWTObservables
-                .observeSingleSelectionIndex(componentCombo);
-        bindingContext.bindValue(changeRequestComponentSelectObserveValue,
-                componentComboObserveSingleSelectionIndexObserveWidget, null, null);
+        IObservableValue moduleComboObserveTextObserveWidget = SWTObservables.observeText(moduleCombo);
+        IObservableValue changeRequestModuleObserveValue = BeansObservables.observeValue(changeRequest, "module");
+        bindingContext.bindValue(moduleComboObserveTextObserveWidget, changeRequestModuleObserveValue, null, null);
         //
-        IObservableValue moduleComboObserveTextObserveWidget = SWTObservables
-                .observeText(moduleCombo);
-        IObservableValue changeRequestModuleObserveValue = BeansObservables.observeValue(
-                changeRequest, "module");
-        bindingContext.bindValue(moduleComboObserveTextObserveWidget,
-                changeRequestModuleObserveValue, null, null);
+        IObservableValue componentComboObserveTextObserveWidget = SWTObservables.observeText(componentCombo);
+        IObservableValue changeRequestComponentObserveValue = BeansObservables.observeValue(changeRequest, "component");
+        bindingContext.bindValue(componentComboObserveTextObserveWidget, changeRequestComponentObserveValue, null, null);
         //
-        IObservableValue componentComboObserveTextObserveWidget = SWTObservables
-                .observeText(componentCombo);
-        IObservableValue changeRequestComponentObserveValue = BeansObservables.observeValue(
-                changeRequest, "component");
-        bindingContext.bindValue(componentComboObserveTextObserveWidget,
-                changeRequestComponentObserveValue, null, null);
+        IObservableValue phaseContextProgressMaxObserveValue = BeansObservables.observeValue(phaseContext, "progressMax");
+        IObservableValue progressBarMaximumObserveValue = PojoObservables.observeValue(progressBar, "maximum");
+        bindingContext.bindValue(phaseContextProgressMaxObserveValue, progressBarMaximumObserveValue, null, null);
         //
-        IObservableValue phaseContextProgressMaxObserveValue = BeansObservables.observeValue(
-                phaseContext, "progressMax");
-        IObservableValue progressBarMaximumObserveValue = PojoObservables.observeValue(progressBar,
-                "maximum");
-        bindingContext.bindValue(phaseContextProgressMaxObserveValue,
-                progressBarMaximumObserveValue, null, null);
-        //
-        IObservableValue phaseContextProgressSelectionObserveValue = BeansObservables.observeValue(
-                phaseContext, "progressSelection");
-        IObservableValue progressBarSelectionObserveValue = PojoObservables.observeValue(
-                progressBar, "selection");
-        bindingContext.bindValue(phaseContextProgressSelectionObserveValue,
-                progressBarSelectionObserveValue, null, null);
+        IObservableValue phaseContextProgressSelectionObserveValue = BeansObservables.observeValue(phaseContext, "progressSelection");
+        IObservableValue progressBarSelectionObserveValue = PojoObservables.observeValue(progressBar, "selection");
+        bindingContext.bindValue(phaseContextProgressSelectionObserveValue, progressBarSelectionObserveValue, null, null);
         //
         return bindingContext;
     }

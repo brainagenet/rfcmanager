@@ -72,12 +72,9 @@ public class CheckoutAsyncExecutor extends AsyncExecutor
             if (svnClient.isWorkingCopyRoot(buildDirectory) == false) {
                 model.setTopIndex(-1);
                 model.clearResources();
-                String urlPath = changeRequest.getConnectionUrl();
+                String urlPath = context.getSnapshotRepoUrlPath();
                 svnClient.checkout(urlPath, buildDirectory, new ISVNEventHandler() {
                     public void checkCancelled() throws SVNCancelException {
-                    	if ( log.isInfoEnabled()) {
-                    		log.info("#### called checkCancelled()");
-                    	}
                     }
 
                     public void handleEvent(SVNEvent event, double progress) throws SVNException {
