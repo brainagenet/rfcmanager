@@ -22,6 +22,7 @@ import net.brainage.rfc.util.svn.SvnClientImpl;
 
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.beans.BeansObservables;
+import org.eclipse.core.databinding.beans.PojoObservables;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.list.IObservableList;
 import org.eclipse.core.databinding.observable.map.IObservableMap;
@@ -55,7 +56,6 @@ import org.eclipse.wb.swt.SWTResourceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNException;
-import org.eclipse.core.databinding.beans.PojoObservables;
 
 /**
  * 
@@ -121,7 +121,6 @@ public class MainWindow
     private ToolItem checkoutToolItem;
     private Combo componentCombo;
     private Combo moduleCombo;
-    private ToolItem toolItem;
     private ToolItem tltmBranch;
     private ToolItem tltmTagging;
 
@@ -400,77 +399,80 @@ public class MainWindow
         this.runToolItem.setText("&Run");
 
         new ToolItem(this.toolBar, SWT.SEPARATOR);
-        
-                this.checkoutToolItem = new ToolItem(this.toolBar, SWT.NONE);
-                this.checkoutToolItem.setEnabled(false);
-                this.checkoutToolItem.addSelectionListener(new SelectionAdapter()
-                {
-                    public void widgetSelected(SelectionEvent e) {
-                        if ( componentCombo.getSelectionIndex() == -1 ) {
-                            MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING);
-                            messageBox.setText("Warning");
-                            messageBox.setMessage("Please select component");
-                            messageBox.open();
-                            return;
-                        }
 
-                        if ( moduleCombo.getSelectionIndex() == -1 ) {
-                            MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING);
-                            messageBox.setText("Warning");
-                            messageBox.setMessage("Please select module for " + componentCombo.getText());
-                            messageBox.open();
-                            return;
-                        }
+        this.checkoutToolItem = new ToolItem(this.toolBar, SWT.NONE);
+        this.checkoutToolItem.setEnabled(false);
+        this.checkoutToolItem.addSelectionListener(new SelectionAdapter()
+        {
+            public void widgetSelected(SelectionEvent e) {
+                if ( componentCombo.getSelectionIndex() == -1 ) {
+                    MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING);
+                    messageBox.setText("Warning");
+                    messageBox.setMessage("Please select component");
+                    messageBox.open();
+                    return;
+                }
 
-                        boolean flag = false;
-                        String wcdir = config.getString(Configuration.Key.WORKSPACE_WC);
-                        StringBuffer buf = new StringBuffer(wcdir);
-                        buf.append("/").append(changeRequest.getComponent());
-                        buf.append("/build/").append(changeRequest.getModule());
+                if ( moduleCombo.getSelectionIndex() == -1 ) {
+                    MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING);
+                    messageBox.setText("Warning");
+                    messageBox.setMessage("Please select module for " + componentCombo.getText());
+                    messageBox.open();
+                    return;
+                }
 
-                        File buildDirectory = new File(buf.toString());
-                        if ( buildDirectory.exists() == false ) {
-                            buildDirectory.mkdirs();
-                            flag = true;
-                        } else {
-                            SvnClient svnClient = SvnClientImpl.getClient();
-                            try {
-                                flag = !svnClient.isWorkingCopyRoot(buildDirectory);
-                            } catch ( SVNException e1 ) {
-                                e1.printStackTrace();
-                            }
-                        }
+                boolean flag = false;
+                String wcdir = config.getString(Configuration.Key.WORKSPACE_WC);
+                StringBuffer buf = new StringBuffer(wcdir);
+                buf.append("/").append(changeRequest.getComponent());
+                buf.append("/build/").append(changeRequest.getModule());
 
-                        if ( flag ) {
-                            CheckoutDialog dialog = new CheckoutDialog(shell, SWT.NONE, phaseContext);
-                            dialog.open();
-                        } else {
-                            MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION);
-                            messageBox.setText("Checkout Information");
-                            messageBox.setMessage("이미 Checkout 했습니다.");
-                            messageBox.open();
-                        }
+                File buildDirectory = new File(buf.toString());
+                if ( buildDirectory.exists() == false ) {
+                    buildDirectory.mkdirs();
+                    flag = true;
+                } else {
+                    SvnClient svnClient = SvnClientImpl.getClient();
+                    try {
+                        flag = !svnClient.isWorkingCopyRoot(buildDirectory);
+                    } catch ( SVNException e1 ) {
+                        e1.printStackTrace();
                     }
-                });
-                this.checkoutToolItem.setImage(SWTResourceManager.getImage(MainWindow.class, "/icons/checkout_action.gif"));
-                this.checkoutToolItem.setText("&Checkout");
-        
+                }
+
+                if ( flag ) {
+                    CheckoutDialog dialog = new CheckoutDialog(shell, SWT.NONE, phaseContext);
+                    dialog.open();
+                } else {
+                    MessageBox messageBox = new MessageBox(shell, SWT.ICON_INFORMATION);
+                    messageBox.setText("Checkout Information");
+                    messageBox.setMessage("이미 Checkout 했습니다.");
+                    messageBox.open();
+                }
+            }
+        });
+        this.checkoutToolItem.setImage(SWTResourceManager.getImage(MainWindow.class,
+                "/icons/checkout_action.gif"));
+        this.checkoutToolItem.setText("&Checkout");
+
         this.tltmBranch = new ToolItem(this.toolBar, SWT.NONE);
         this.tltmBranch.setEnabled(false);
-        this.tltmBranch.setImage(SWTResourceManager.getImage(MainWindow.class, "/icons/branches_rep.gif"));
-        this.tltmBranch.addSelectionListener(new SelectionAdapter() {
+        this.tltmBranch.setImage(SWTResourceManager.getImage(MainWindow.class,
+                "/icons/branches_rep.gif"));
+        this.tltmBranch.addSelectionListener(new SelectionAdapter()
+        {
             @Override
             public void widgetSelected(SelectionEvent e) {
             }
         });
         this.tltmBranch.setText("Branching");
-        
+
         this.tltmTagging = new ToolItem(this.toolBar, SWT.NONE);
         this.tltmTagging.setEnabled(false);
         this.tltmTagging.setImage(SWTResourceManager.getImage(MainWindow.class, "/icons/tag.gif"));
         this.tltmTagging.setText("Tagging");
-        
-        this.toolItem = new ToolItem(this.toolBar, SWT.SEPARATOR);
+
+        new ToolItem(this.toolBar, SWT.SEPARATOR);
 
         this.prefToolItem = new ToolItem(this.toolBar, SWT.NONE);
         this.prefToolItem.addSelectionListener(new SelectionAdapter()
@@ -497,70 +499,110 @@ public class MainWindow
                 "/icons/rem_co.gif"));
         this.exitToolItem.setText("E&xit");
     }
+
     protected DataBindingContext initDataBindings() {
         DataBindingContext bindingContext = new DataBindingContext();
         //
-        IObservableValue changeRequestFileObserveValue = BeansObservables.observeValue(changeRequest, "file");
-        IObservableValue fileTextObserveTextObserveWidget = SWTObservables.observeText(fileText, SWT.Modify);
-        bindingContext.bindValue(changeRequestFileObserveValue, fileTextObserveTextObserveWidget, null, null);
+        IObservableValue changeRequestFileObserveValue = BeansObservables.observeValue(
+                changeRequest, "file");
+        IObservableValue fileTextObserveTextObserveWidget = SWTObservables.observeText(fileText,
+                SWT.Modify);
+        bindingContext.bindValue(changeRequestFileObserveValue, fileTextObserveTextObserveWidget,
+                null, null);
         //
-        IObservableValue changeRequestSummaryObserveValue = BeansObservables.observeValue(changeRequest, "summary");
-        IObservableValue summaryTextObserveTextObserveWidget = SWTObservables.observeText(summaryText, SWT.Modify);
-        bindingContext.bindValue(changeRequestSummaryObserveValue, summaryTextObserveTextObserveWidget, null, null);
+        IObservableValue changeRequestSummaryObserveValue = BeansObservables.observeValue(
+                changeRequest, "summary");
+        IObservableValue summaryTextObserveTextObserveWidget = SWTObservables.observeText(
+                summaryText, SWT.Modify);
+        bindingContext.bindValue(changeRequestSummaryObserveValue,
+                summaryTextObserveTextObserveWidget, null, null);
         //
         ObservableListContentProvider listContentProvider = new ObservableListContentProvider();
         resourcesTableViewer.setContentProvider(listContentProvider);
         //
-        IObservableMap[] observeMaps = BeansObservables.observeMaps(listContentProvider.getKnownElements(), ChangeRequestResource.class, new String[]{"no", "resource", "revision", "type", "status"});
+        IObservableMap[] observeMaps = BeansObservables.observeMaps(
+                listContentProvider.getKnownElements(), ChangeRequestResource.class, new String[] {
+                        "no", "resource", "revision", "type", "status" });
         resourcesTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps));
         //
-        IObservableList changeRequestResourcesObserveList = BeansObservables.observeList(Realm.getDefault(), changeRequest, "resources");
+        IObservableList changeRequestResourcesObserveList = BeansObservables.observeList(
+                Realm.getDefault(), changeRequest, "resources");
         resourcesTableViewer.setInput(changeRequestResourcesObserveList);
         //
-        IObservableValue phaseContextPhaseNameObserveValue = BeansObservables.observeValue(phaseContext, "phaseName");
-        IObservableValue progressNameLabelObserveTextObserveWidget = SWTObservables.observeText(progressNameLabel);
-        bindingContext.bindValue(phaseContextPhaseNameObserveValue, progressNameLabelObserveTextObserveWidget, null, null);
+        IObservableValue phaseContextPhaseNameObserveValue = BeansObservables.observeValue(
+                phaseContext, "phaseName");
+        IObservableValue progressNameLabelObserveTextObserveWidget = SWTObservables
+                .observeText(progressNameLabel);
+        bindingContext.bindValue(phaseContextPhaseNameObserveValue,
+                progressNameLabelObserveTextObserveWidget, null, null);
         //
-        IObservableValue phaseContextPhaseDescriptionObserveValue = BeansObservables.observeValue(phaseContext, "phaseDescription");
-        IObservableValue progressDescriptionLabelObserveTextObserveWidget = SWTObservables.observeText(ProgressDescriptionLabel);
-        bindingContext.bindValue(phaseContextPhaseDescriptionObserveValue, progressDescriptionLabelObserveTextObserveWidget, null, null);
+        IObservableValue phaseContextPhaseDescriptionObserveValue = BeansObservables.observeValue(
+                phaseContext, "phaseDescription");
+        IObservableValue progressDescriptionLabelObserveTextObserveWidget = SWTObservables
+                .observeText(ProgressDescriptionLabel);
+        bindingContext.bindValue(phaseContextPhaseDescriptionObserveValue,
+                progressDescriptionLabelObserveTextObserveWidget, null, null);
         //
         ObservableListContentProvider listContentProvider_1 = new ObservableListContentProvider();
         errorsTableViewer.setContentProvider(listContentProvider_1);
         //
-        IObservableMap[] observeMaps_1 = BeansObservables.observeMaps(listContentProvider_1.getKnownElements(), ErrorDescription.class, new String[]{"no", "description", "resource"});
+        IObservableMap[] observeMaps_1 = BeansObservables.observeMaps(
+                listContentProvider_1.getKnownElements(), ErrorDescription.class, new String[] {
+                        "no", "description", "resource" });
         errorsTableViewer.setLabelProvider(new ObservableMapLabelProvider(observeMaps_1));
         //
-        IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(Realm.getDefault(), phaseContext, "errors");
+        IObservableList phaseContextErrorsObserveList = BeansObservables.observeList(
+                Realm.getDefault(), phaseContext, "errors");
         errorsTableViewer.setInput(phaseContextErrorsObserveList);
         //
-        IObservableValue changeRequestConnectionUrlObserveValue = BeansObservables.observeValue(changeRequest, "connectionUrl");
-        IObservableValue connectionLabelObserveTextObserveWidget = SWTObservables.observeText(connectionLabel);
-        bindingContext.bindValue(changeRequestConnectionUrlObserveValue, connectionLabelObserveTextObserveWidget, null, null);
+        IObservableValue changeRequestConnectionUrlObserveValue = BeansObservables.observeValue(
+                changeRequest, "connectionUrl");
+        IObservableValue connectionLabelObserveTextObserveWidget = SWTObservables
+                .observeText(connectionLabel);
+        bindingContext.bindValue(changeRequestConnectionUrlObserveValue,
+                connectionLabelObserveTextObserveWidget, null, null);
         //
-        IObservableValue changeRequestModuleSelectObserveValue = BeansObservables.observeValue(changeRequest, "moduleSelect");
-        IObservableValue moduleComboObserveSingleSelectionIndexObserveWidget_1 = SWTObservables.observeSingleSelectionIndex(moduleCombo);
-        bindingContext.bindValue(changeRequestModuleSelectObserveValue, moduleComboObserveSingleSelectionIndexObserveWidget_1, null, null);
+        IObservableValue changeRequestModuleSelectObserveValue = BeansObservables.observeValue(
+                changeRequest, "moduleSelect");
+        IObservableValue moduleComboObserveSingleSelectionIndexObserveWidget_1 = SWTObservables
+                .observeSingleSelectionIndex(moduleCombo);
+        bindingContext.bindValue(changeRequestModuleSelectObserveValue,
+                moduleComboObserveSingleSelectionIndexObserveWidget_1, null, null);
         //
-        IObservableValue changeRequestComponentSelectObserveValue = BeansObservables.observeValue(changeRequest, "componentSelect");
-        IObservableValue componentComboObserveSingleSelectionIndexObserveWidget = SWTObservables.observeSingleSelectionIndex(componentCombo);
-        bindingContext.bindValue(changeRequestComponentSelectObserveValue, componentComboObserveSingleSelectionIndexObserveWidget, null, null);
+        IObservableValue changeRequestComponentSelectObserveValue = BeansObservables.observeValue(
+                changeRequest, "componentSelect");
+        IObservableValue componentComboObserveSingleSelectionIndexObserveWidget = SWTObservables
+                .observeSingleSelectionIndex(componentCombo);
+        bindingContext.bindValue(changeRequestComponentSelectObserveValue,
+                componentComboObserveSingleSelectionIndexObserveWidget, null, null);
         //
-        IObservableValue moduleComboObserveTextObserveWidget = SWTObservables.observeText(moduleCombo);
-        IObservableValue changeRequestModuleObserveValue = BeansObservables.observeValue(changeRequest, "module");
-        bindingContext.bindValue(moduleComboObserveTextObserveWidget, changeRequestModuleObserveValue, null, null);
+        IObservableValue moduleComboObserveTextObserveWidget = SWTObservables
+                .observeText(moduleCombo);
+        IObservableValue changeRequestModuleObserveValue = BeansObservables.observeValue(
+                changeRequest, "module");
+        bindingContext.bindValue(moduleComboObserveTextObserveWidget,
+                changeRequestModuleObserveValue, null, null);
         //
-        IObservableValue componentComboObserveTextObserveWidget = SWTObservables.observeText(componentCombo);
-        IObservableValue changeRequestComponentObserveValue = BeansObservables.observeValue(changeRequest, "component");
-        bindingContext.bindValue(componentComboObserveTextObserveWidget, changeRequestComponentObserveValue, null, null);
+        IObservableValue componentComboObserveTextObserveWidget = SWTObservables
+                .observeText(componentCombo);
+        IObservableValue changeRequestComponentObserveValue = BeansObservables.observeValue(
+                changeRequest, "component");
+        bindingContext.bindValue(componentComboObserveTextObserveWidget,
+                changeRequestComponentObserveValue, null, null);
         //
-        IObservableValue phaseContextProgressMaxObserveValue = BeansObservables.observeValue(phaseContext, "progressMax");
-        IObservableValue progressBarMaximumObserveValue = PojoObservables.observeValue(progressBar, "maximum");
-        bindingContext.bindValue(phaseContextProgressMaxObserveValue, progressBarMaximumObserveValue, null, null);
+        IObservableValue phaseContextProgressMaxObserveValue = BeansObservables.observeValue(
+                phaseContext, "progressMax");
+        IObservableValue progressBarMaximumObserveValue = PojoObservables.observeValue(progressBar,
+                "maximum");
+        bindingContext.bindValue(phaseContextProgressMaxObserveValue,
+                progressBarMaximumObserveValue, null, null);
         //
-        IObservableValue phaseContextProgressSelectionObserveValue = BeansObservables.observeValue(phaseContext, "progressSelection");
-        IObservableValue progressBarSelectionObserveValue = PojoObservables.observeValue(progressBar, "selection");
-        bindingContext.bindValue(phaseContextProgressSelectionObserveValue, progressBarSelectionObserveValue, null, null);
+        IObservableValue phaseContextProgressSelectionObserveValue = BeansObservables.observeValue(
+                phaseContext, "progressSelection");
+        IObservableValue progressBarSelectionObserveValue = PojoObservables.observeValue(
+                progressBar, "selection");
+        bindingContext.bindValue(phaseContextProgressSelectionObserveValue,
+                progressBarSelectionObserveValue, null, null);
         //
         return bindingContext;
     }
