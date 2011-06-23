@@ -256,6 +256,12 @@ public class ChangeRequest extends AbstractModelObject
     public List<ChangeRequestResource> getResources() {
         return resources;
     }
+    
+    public void clearResourceStatus() {
+        for ( ChangeRequestResource r : resources) {
+            r.setStatus(null);
+        }
+    }
 
     /**
      * 
