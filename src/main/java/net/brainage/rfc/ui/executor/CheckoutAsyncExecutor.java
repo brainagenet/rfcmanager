@@ -11,7 +11,6 @@ import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.CheckoutModel;
 import net.brainage.rfc.model.SvnResource;
 import net.brainage.rfc.model.WorkPhaseContext;
-import net.brainage.rfc.phase.impl.CheckoutWorkPhaseChain;
 import net.brainage.rfc.ui.AsyncExecutor;
 import net.brainage.rfc.util.StringUtils;
 import net.brainage.rfc.util.svn.SvnClient;
@@ -33,7 +32,7 @@ import org.tmatesoft.svn.core.wc.SVNEvent;
 public class CheckoutAsyncExecutor extends AsyncExecutor
 {
 
-    private static final Logger log = LoggerFactory.getLogger(CheckoutWorkPhaseChain.class);
+    private static final Logger log = LoggerFactory.getLogger(CheckoutAsyncExecutor.class);
 
     private CheckoutModel model;
 
