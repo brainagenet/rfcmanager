@@ -4,7 +4,13 @@
  */
 package net.brainage.rfc.util.svn;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.brainage.rfc.util.svn.handler.AbstractSvnDiffStatusHandler;
 import net.brainage.rfc.util.svn.handler.DefaultSvnDiffStatusHandler;
@@ -14,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.io.SVNRepository;
+import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
@@ -44,6 +52,11 @@ public class SvnClientImpl implements SvnClient
      * 
      */
     private SVNClientManager svnClientManager;
+
+    /**
+     * 
+     */
+    private Map<String, SVNRepository> repoMap = new HashMap<String, SVNRepository>();
 
     /**
      * 
@@ -97,14 +110,67 @@ public class SvnClientImpl implements SvnClient
         SVNURL url2 = SVNURL.parseURIDecoded(urlPath2);
 
         SVNDiffClient diffClient = svnClientManager.getDiffClient();
-        if ( handler == null) {
+        if ( handler == null ) {
             handler = new DefaultSvnDiffStatusHandler();
         }
-        
-        diffClient.doDiffStatus(url1, revision1, url2, SVNRevision.HEAD,
-                SVNDepth.IMMEDIATES, false, handler);
-        
+
+        diffClient.doDiffStatus(url1, revision1, url2, SVNRevision.HEAD, SVNDepth.IMMEDIATES,
+                false, handler);
+
         return handler.getModificationType();
+    }
+
+    /**
+     * @param repoUrlPath
+     * @param urlPath
+     * @param revision
+     * @param targetPath
+     */
+    public void getFile(String repoUrlPath, String urlPath, long revision, String targetPath)
+            throws SVNException {
+        File target = new File(targetPath);
+        getFile(repoUrlPath, urlPath, revision, target);
+    }
+
+    /**
+     * @param repoUrlPath
+     * @param urlPath
+     * @param revision
+     * @param target
+     */
+    public void getFile(String repoUrlPath, String urlPath, long revision, File target)
+            throws SVNException {
+        SVNRepository repository = getRepository(repoUrlPath);
+
+        File targetFile = new File(target, urlPath);
+        if ( targetFile.exists() == false ) {
+            File parent = targetFile.getParentFile();
+            if ( parent.exists() == false ) {
+                parent.mkdirs();
+            }
+        }
+
+        OutputStream out = null;
+        try {
+            out = new BufferedOutputStream(new FileOutputStream(targetFile));
+            repository.getFile(urlPath, revision, null, out);
+            out.flush();
+        } catch ( IOException e ) {
+        } finally {
+            try {
+                out.close();
+            } catch ( IOException ioex ) {
+            }
+        }
+    }
+
+    private SVNRepository getRepository(String repoUrlPath) throws SVNException {
+        SVNRepository repo = repoMap.get(repoUrlPath);
+        if ( repo == null ) {
+            SVNURL repoUrl = SVNURL.parseURIDecoded(repoUrlPath);
+            repo = SVNRepositoryFactory.create(repoUrl);
+        }
+        return repo;
     }
 
     /*

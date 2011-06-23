@@ -46,6 +46,12 @@ public interface SvnClient
     public char diffStatus(String urlPath1, long urlPath1Revision, String urlPath2,
             AbstractSvnDiffStatusHandler handler) throws SVNException;
 
+    public void getFile(String repoUrlPath, String urlPath, long revision, String targetPath)
+            throws SVNException;
+
+    public void getFile(String repoUrlPath, String urlPath, long revision, File target)
+            throws SVNException;
+
     /**
      * @param path
      * @return
