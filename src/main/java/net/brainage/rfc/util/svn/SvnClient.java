@@ -20,6 +20,8 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 public interface SvnClient
 {
 
+    public void add(File file) throws SVNException;
+    
     /**
      * @param urlPath
      * @param destPath

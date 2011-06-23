@@ -27,6 +27,7 @@ import org.tmatesoft.svn.core.wc.SVNClientManager;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
+import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 /**
@@ -71,6 +72,12 @@ public class SvnClientImpl implements SvnClient
      */
     public static SvnClient getClient() {
         return svnClient;
+    }
+
+    @Override
+    public void add(File file) throws SVNException {
+        SVNWCClient wcClient = svnClientManager.getWCClient();
+        wcClient.doAdd(file, false, false, false, SVNDepth.IMMEDIATES, false, true, true);
     }
 
     /*
