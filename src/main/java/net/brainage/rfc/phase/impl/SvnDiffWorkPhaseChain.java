@@ -6,10 +6,6 @@ package net.brainage.rfc.phase.impl;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNException;
-
 import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.ChangeRequestResource;
 import net.brainage.rfc.model.WorkPhaseContext;
@@ -19,6 +15,10 @@ import net.brainage.rfc.util.svn.SvnClient;
 import net.brainage.rfc.util.svn.SvnClientImpl;
 import net.brainage.rfc.util.svn.handler.AbstractSvnDiffStatusHandler;
 import net.brainage.rfc.util.svn.handler.DefaultSvnDiffStatusHandler;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tmatesoft.svn.core.SVNException;
 
 /**
  * 
@@ -31,7 +31,7 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
 
     private static final Logger log = LoggerFactory.getLogger(SvnDiffWorkPhaseChain.class);
 
-    private static final String WORKPHASE_NAME = "Subversion Diff Work Phase";
+    private static final String WORKPHASE_NAME = "Subversion Diff Verification Work Phase";
 
     /*
      * (non-Javadoc)
@@ -52,34 +52,37 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
      */
     @Override
     protected void internalProcess(WorkPhaseContext context) {
-        context.setPhaseDescription("start working to confirm the change...");
+        context.setPhaseDescription("start working for diff verification...");
 
         SvnClient svnClient = SvnClientImpl.getClient();
         try {
             ChangeRequest cr = context.getChangeRequest();
             List<ChangeRequestResource> resources = cr.getResources();
             int i = 0;
-            for ( ChangeRequestResource resource : resources ) {
+            for ( ChangeRequestResource r : resources ) {
+                context.setPhaseDescription("diff for '" + r.getResource() + "'");
                 StringBuffer urlPath1 = new StringBuffer(cr.getConnectionUrl2());
                 StringBuffer urlPath2 = new StringBuffer(cr.getConnectionUrl());
-                if ( resource.getResource().startsWith("/") == false ) {
+                if ( r.getResource().startsWith("/") == false ) {
                     urlPath1.append("/");
                     urlPath2.append("/");
                 }
-                urlPath1.append(resource.getResource());
-                urlPath2.append(resource.getResource());
+                urlPath1.append(r.getResource());
+                urlPath2.append(r.getResource());
 
                 AbstractSvnDiffStatusHandler diffStatusHandler = new DefaultSvnDiffStatusHandler();
-                svnClient.diffStatus(urlPath1.toString(), resource.getRevision(),
+                svnClient.diffStatus(urlPath1.toString(), r.getRevision(),
                         urlPath2.toString(), diffStatusHandler);
-                resource.setStatus("NOT OK");
-                if ( StringUtils.hasText(resource.getType())
-                        && resource.getType().equals(diffStatusHandler.getModificationText()) ) {
-                    resource.setStatus("OK");
+                if ( StringUtils.hasText(r.getType())
+                        && r.getType().equals(diffStatusHandler.getModificationText()) ) {
+                    r.setStatus("OK");
+                } else {
+                    r.setStatus("");
+                    context.addError(r.getResource(), "modification type mismatch.");
                 }
-                
                 context.setProgressSelection(++i);
             }
+            context.setPhaseDescription("Diff verification completed.");
         } catch ( SVNException svnex ) {
         }
     }
