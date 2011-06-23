@@ -13,10 +13,10 @@ package net.brainage.rfc;
 public final class Constants
 {
 
-    public static final String[] COMPONENT_LIST = new String[] { "pcw-sup", "pcw-sdm", "pcw-sds",
+    public static final String[] COMPONENT_LIST = new String[] {"pcw-cmm", "pcw-sup", "pcw-sdm", "pcw-sds",
             "pcw-smg", "pcw-sob" };
 
-    public static final String[] MODULE_LIST = new String[] { "pcw-sup-ear", "pcw-sdm-ear",
+    public static final String[] MODULE_LIST = new String[] { "pcw-test-ear", "pcw-sup-ear", "pcw-sdm-ear",
             "pcw-sds-ear", "pcw-smg-ear", "pcw-smg-batch", "pcw-sob-ear" };
 
     public static final String[] STATUS_TEXTS = new String[] { "added", "modified", "deleted", };
