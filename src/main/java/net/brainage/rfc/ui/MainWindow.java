@@ -164,9 +164,10 @@ public class MainWindow
      * 
      */
     private void registerPropertyEvent() {
-        this.changeRequest.addPropertyChangeListener("file", new FilePropertyChangeListener(
-                changeRequest));
-        PropertyChangeListener listener = new ConnectionUrlChangeListener(changeRequest);
+        PropertyChangeListener listener = new FilePropertyChangeListener(changeRequest);
+        this.changeRequest.addPropertyChangeListener("file", listener);
+        
+        listener = new ConnectionUrlChangeListener(changeRequest);
         this.changeRequest.addPropertyChangeListener("component", listener);
         this.changeRequest.addPropertyChangeListener("module", listener);
     }
@@ -390,6 +391,7 @@ public class MainWindow
                 viewHolder.setDisplay(Display.getCurrent());
                 viewHolder.setShell(shell);
                 phaseContext.setViewHolder(viewHolder);
+                
                 new Thread(new RunAsyncExecutor(phaseContext), "RunAsyncExecutor").start();
             }
         });
