@@ -33,6 +33,13 @@ public class WorkPhaseContext extends AbstractModelObject
     private int progressMax;
     private int progressSelection = 0;
 
+    // generated path properties
+    private String workingCopyPath;
+    private String tmpPath;
+    private String baseRepoUrlPath;
+    private String mainStremRepoUrlPath;
+    private String snapshotRepoUrlPath;
+
     private ViewHolder viewHolder;
 
     /**
@@ -185,6 +192,76 @@ public class WorkPhaseContext extends AbstractModelObject
         int oldValue = this.progressSelection;
         this.progressSelection = progressSelection;
         firePropertyChange("progressSelection", oldValue, this.progressSelection);
+    }
+
+    /**
+     * @return the workingCopyPath
+     */
+    public String getWorkingCopyPath() {
+        return workingCopyPath;
+    }
+
+    /**
+     * @param workingCopyPath the workingCopyPath to set
+     */
+    public void setWorkingCopyPath(String workingCopyPath) {
+        this.workingCopyPath = workingCopyPath;
+    }
+
+    /**
+     * @return the tmpPath
+     */
+    public String getTmpPath() {
+        return tmpPath;
+    }
+
+    /**
+     * @param tmpPath the tmpPath to set
+     */
+    public void setTmpPath(String tmpPath) {
+        this.tmpPath = tmpPath;
+    }
+
+    /**
+     * @return the baseRepoUrlPath
+     */
+    public String getBaseRepoUrlPath() {
+        return baseRepoUrlPath;
+    }
+
+    /**
+     * @param baseRepoUrlPath the baseRepoUrlPath to set
+     */
+    public void setBaseRepoUrlPath(String baseRepoUrlPath) {
+        this.baseRepoUrlPath = baseRepoUrlPath;
+    }
+
+    /**
+     * @return the mainStremRepoUrlPath
+     */
+    public String getMainStremRepoUrlPath() {
+        return mainStremRepoUrlPath;
+    }
+
+    /**
+     * @param mainStremRepoUrlPath the mainStremRepoUrlPath to set
+     */
+    public void setMainStremRepoUrlPath(String mainStremRepoUrlPath) {
+        this.mainStremRepoUrlPath = mainStremRepoUrlPath;
+    }
+
+    /**
+     * @return the snapshotRepoUrlPath
+     */
+    public String getSnapshotRepoUrlPath() {
+        return snapshotRepoUrlPath;
+    }
+
+    /**
+     * @param snapshotRepoUrlPath the snapshotRepoUrlPath to set
+     */
+    public void setSnapshotRepoUrlPath(String snapshotRepoUrlPath) {
+        this.snapshotRepoUrlPath = snapshotRepoUrlPath;
     }
 
     /**

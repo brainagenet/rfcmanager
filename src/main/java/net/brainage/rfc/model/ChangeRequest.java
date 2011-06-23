@@ -24,8 +24,8 @@ public class ChangeRequest extends AbstractModelObject
     private String requestDate;
     private String summary;
     private String comment;
-    private String connectionUrl;
-    private String connectionUrl2;
+    // private String connectionUrl;
+    // private String connectionUrl2;
 
     private List<ChangeRequestResource> resources = new ArrayList<ChangeRequestResource>();
 
@@ -191,33 +191,33 @@ public class ChangeRequest extends AbstractModelObject
     /**
      * @return the connectionUrl
      */
-    public String getConnectionUrl() {
-        return connectionUrl;
-    }
+//    public String getConnectionUrl() {
+//        return connectionUrl;
+//    }
 
     /**
      * @param connectionUrl
      *            the connectionUrl to set
      */
-    public void setConnectionUrl(String connectionUrl) {
-        String oldValue = this.connectionUrl;
-        this.connectionUrl = connectionUrl;
-        firePropertyChange("connectionUrl", oldValue, this.connectionUrl);
-    }
+//    public void setConnectionUrl(String connectionUrl) {
+//        String oldValue = this.connectionUrl;
+//        this.connectionUrl = connectionUrl;
+//        firePropertyChange("connectionUrl", oldValue, this.connectionUrl);
+//    }
 
     /**
      * @return the connectionUrl2
      */
-    public String getConnectionUrl2() {
-        return connectionUrl2;
-    }
+//    public String getConnectionUrl2() {
+//        return connectionUrl2;
+//    }
 
     /**
      * @param connectionUrl2 the connectionUrl2 to set
      */
-    public void setConnectionUrl2(String connectionUrl2) {
-        this.connectionUrl2 = connectionUrl2;
-    }
+//    public void setConnectionUrl2(String connectionUrl2) {
+//        this.connectionUrl2 = connectionUrl2;
+//    }
 
     /**
      * @param resource
@@ -278,9 +278,6 @@ public class ChangeRequest extends AbstractModelObject
 
         setSummary(null);
         setComment(null);
-
-        setConnectionUrl(null);
-        setConnectionUrl2(null);
 
         clearResources();
     }
