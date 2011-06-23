@@ -52,8 +52,6 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
      */
     @Override
     protected void internalProcess(WorkPhaseContext context) {
-        context.setPhaseDescription("start working for diff verification...");
-
         SvnClient svnClient = SvnClientImpl.getClient();
         try {
             ChangeRequest cr = context.getChangeRequest();

@@ -20,7 +20,8 @@ public class WorkPhaseChainFactory
 
     private static String[] CHAIN_CLASSES = new String[] {
             "net.brainage.rfc.phase.impl.SvnDiffWorkPhaseChain",
-            "net.brainage.rfc.phase.impl.ResourceDownloadWorkPhaseChain" };
+            "net.brainage.rfc.phase.impl.ResourceDownloadWorkPhaseChain",
+            "net.brainage.rfc.phase.impl.ResourceCopyWorkPhaseChain" };
 
     private static WorkPhaseChain phaseChain;
 

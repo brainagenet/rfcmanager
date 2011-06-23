@@ -85,6 +85,7 @@ public class ResourceDownloadWorkPhaseChain extends WorkPhaseChain
                 svnClient.getFile(context.getMainStremRepoUrlPath(), r.getResource(),
                         r.getRevision(), context.getTmpPath());
                 context.setPhaseDescription("downloaded '" + r.getResource() + "'");
+                r.setStatus("OK");
                 if (log.isDebugEnabled()) {
                     log.debug("downloaded '" + r.getResource() + "'");
                 }
