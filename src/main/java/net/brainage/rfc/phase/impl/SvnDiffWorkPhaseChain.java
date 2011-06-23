@@ -60,9 +60,13 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
             List<ChangeRequestResource> resources = cr.getResources();
             int i = 0;
             for ( ChangeRequestResource r : resources ) {
+                context.setProgressSelection(++i);
+                if ( r.getModType() == 'A' ) {
+                    continue;
+                }
                 context.setPhaseDescription("diff for '" + r.getResource() + "'");
-                StringBuffer urlPath1 = new StringBuffer(cr.getConnectionUrl2());
-                StringBuffer urlPath2 = new StringBuffer(cr.getConnectionUrl());
+                StringBuffer urlPath1 = new StringBuffer(context.getMainStremRepoUrlPath());
+                StringBuffer urlPath2 = new StringBuffer(context.getSnapshotRepoUrlPath());
                 if ( r.getResource().startsWith("/") == false ) {
                     urlPath1.append("/");
                     urlPath2.append("/");
@@ -85,7 +89,6 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
                     r.setStatus("");
                     context.addError(r.getResource(), "modification type mismatch.");
                 }
-                context.setProgressSelection(++i);
             }
             context.setPhaseDescription("Diff verification completed.");
         } catch ( SVNException svnex ) {
