@@ -18,7 +18,9 @@ public class WorkPhaseChainFactory
 
     private static final Logger log = LoggerFactory.getLogger(WorkPhaseChainFactory.class);
 
-    private static String[] CHAIN_CLASSES = new String[] { "net.brainage.rfc.phase.impl.SvnDiffWorkPhaseChain" };
+    private static String[] CHAIN_CLASSES = new String[] {
+            "net.brainage.rfc.phase.impl.SvnDiffWorkPhaseChain",
+            "net.brainage.rfc.phase.impl.ResourceDownloadWorkPhaseChain" };
 
     private static WorkPhaseChain phaseChain;
 
