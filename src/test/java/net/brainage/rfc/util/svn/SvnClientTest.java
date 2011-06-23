@@ -40,6 +40,19 @@ public class SvnClientTest
     public void tearDown() throws Exception {
     }
 
+    @Test
+    public void testGetFile() {
+        String repoUrlPath = "svn://121.253.45.167/pcw-smg/trunk/pcw-smg-ear";
+        String urlPath = "pcw-smg-svc/src/java/com/sec/pcw/smg/service/PushServiceResourceImpl.java";
+        long revision = 522;
+        String targetPath = "./workspaces/tmp/pcw-smg/pcw-smg-ear/" + urlPath;
+        try {
+            svnClient.getFile(repoUrlPath, urlPath, revision, targetPath);
+        } catch ( SVNException e ) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Test method for {@link net.brainage.rfc.util.svn.SvnClientImpl#diffStatus(java.lang.String, long, java.lang.String, net.brainage.rfc.util.svn.handler.AbstractSvnDiffStatusHandler)}.
      */
@@ -49,13 +62,13 @@ public class SvnClientTest
         long revision1 = 522;
 
         String urlPath2 = "svn://121.253.45.167/pcw-smg/branches/pcw-smg-ear/pcw-smg-svc/src/java/com/sec/pcw/smg/service/PushServiceResourceImpl.java";
-        
+
         try {
             char actual = svnClient.diffStatus(urlPath1, revision1, urlPath2, null);
             assertEquals('M', actual);
         } catch ( SVNException e ) {
         }
-        
+
     }
 
 }
