@@ -6,8 +6,6 @@ package net.brainage.rfc.ui.executor;
 
 import java.io.File;
 
-import net.brainage.rfc.config.Configuration;
-import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.CheckoutModel;
 import net.brainage.rfc.model.SvnResource;
 import net.brainage.rfc.model.WorkPhaseContext;
@@ -43,24 +41,10 @@ public class CheckoutAsyncExecutor extends AsyncExecutor
 
     protected void internalProcess() {
         WorkPhaseContext context = getContext();
-        ChangeRequest changeRequest = context.getChangeRequest();
-        Configuration config = Configuration.getInstance();
 
-        String wcdir = config.getString(Configuration.Key.WORKSPACE_WC);
-        StringBuffer buf = new StringBuffer(wcdir);
-        buf.append("/").append(changeRequest.getComponent());
-        buf.append("/build/").append(changeRequest.getModule());
-
-        File buildDirectory = new File(buf.toString());
-        if (log.isDebugEnabled()) {
-            log.debug("    - working copy dir for {} = {}", changeRequest.getComponent(),
-                    buildDirectory.getAbsolutePath());
-        }
-
-        if (buildDirectory.exists() == false) {
+        File buildDirectory = new File(context.getWorkingCopyPath());
+        if ( buildDirectory.exists() == false ) {
             buildDirectory.mkdirs();
-            context.setPhaseDescription("create build directory for '"
-                    + changeRequest.getComponent() + "' component...");
         }
 
         // svnclient 생성
@@ -68,11 +52,12 @@ public class CheckoutAsyncExecutor extends AsyncExecutor
 
         try {
             // build directory가 버전 관리가 되는 디렉토리가 아니라면 checkout
-            if (svnClient.isWorkingCopyRoot(buildDirectory) == false) {
+            if ( svnClient.isWorkingCopyRoot(buildDirectory) == false ) {
                 model.setTopIndex(-1);
                 model.clearResources();
                 String urlPath = context.getSnapshotRepoUrlPath();
-                svnClient.checkout(urlPath, buildDirectory, new ISVNEventHandler() {
+                svnClient.checkout(urlPath, buildDirectory, new ISVNEventHandler()
+                {
                     public void checkCancelled() throws SVNCancelException {
                     }
 
@@ -80,7 +65,7 @@ public class CheckoutAsyncExecutor extends AsyncExecutor
                         String action = event.getAction().toString();
                         String path = event.getFile().getAbsolutePath();
                         String mimeType = event.getMimeType();
-                        if (StringUtils.isEmpty(mimeType)) {
+                        if ( StringUtils.isEmpty(mimeType) ) {
                             mimeType = StringUtils.EMPTY;
                         }
 
@@ -90,12 +75,15 @@ public class CheckoutAsyncExecutor extends AsyncExecutor
                         r.setMimeType(mimeType);
                         model.addResource(r);
                         model.setTopIndex(model.getTopIndex() + 1);
+                        if ( log.isDebugEnabled() ) {
+                            log.debug("# checkout {}", path);
+                        }
                     }
                 });
             } else {
                 // TODO: 버전 관리가 되고 있다면 Update를 한다.
             }
-        } catch (SVNException e) {
+        } catch ( SVNException e ) {
             context.addError("CheckoutAsyncExecutor", e.getMessage());
         }
     }
