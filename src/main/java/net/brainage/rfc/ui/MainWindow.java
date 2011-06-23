@@ -14,7 +14,6 @@ import net.brainage.rfc.model.ChangeRequestResource;
 import net.brainage.rfc.model.ErrorDescription;
 import net.brainage.rfc.model.ViewHolder;
 import net.brainage.rfc.model.WorkPhaseContext;
-import net.brainage.rfc.ui.event.ConnectionUrlChangeListener;
 import net.brainage.rfc.ui.event.FilePropertyChangeListener;
 import net.brainage.rfc.ui.event.PathGenerationListener;
 import net.brainage.rfc.ui.executor.RunAsyncExecutor;
