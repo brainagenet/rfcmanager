@@ -70,9 +70,14 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
                 urlPath1.append(r.getResource());
                 urlPath2.append(r.getResource());
 
+                if ( log.isDebugEnabled() ) {
+                    log.debug("url1: {}", urlPath1.toString());
+                    log.debug("url2: {}", urlPath2.toString());
+                }
+
                 AbstractSvnDiffStatusHandler diffStatusHandler = new DefaultSvnDiffStatusHandler();
-                svnClient.diffStatus(urlPath1.toString(), r.getRevision(),
-                        urlPath2.toString(), diffStatusHandler);
+                svnClient.diffStatus(urlPath1.toString(), r.getRevision(), urlPath2.toString(),
+                        diffStatusHandler);
                 if ( StringUtils.hasText(r.getType())
                         && r.getType().equals(diffStatusHandler.getModificationText()) ) {
                     r.setStatus("OK");
