@@ -13,16 +13,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.tmatesoft.svn.core.SVNException;
-
 import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.ChangeRequestResource;
 import net.brainage.rfc.model.WorkPhaseContext;
 import net.brainage.rfc.phase.WorkPhaseChain;
-import net.brainage.rfc.util.svn.SvnClient;
-import net.brainage.rfc.util.svn.SvnClientImpl;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -74,9 +71,11 @@ public class ResourceCopyWorkPhaseChain extends WorkPhaseChain
         File tmpDir = new File(context.getTmpPath());
 
         ChangeRequest cr = context.getChangeRequest();
-        SvnClient svnClient = SvnClientImpl.getClient();
         int i = 0;
         for ( ChangeRequestResource r : cr.getResources() ) {
+            if ( "deleted".equals(r.getType())) {
+                continue;
+            }
             String resPath = r.getResource();
             context.setPhaseDescription("copy '" + resPath + "'...");
             // tmp --> wc
@@ -84,13 +83,8 @@ public class ResourceCopyWorkPhaseChain extends WorkPhaseChain
             File to = new File(wcDir, resPath);
             try {
                 copy(from, to);
-                if ( r.getModType() == 'A') {
-                    svnClient.add(to);
-                }
             } catch ( IOException e ) {
                 log.error("File error occurred while copying.", e);
-            } catch ( SVNException e ) {
-                log.error("Version control error occurred while adding.", e);
             }
             i++;
             context.setProgressSelection(i);
