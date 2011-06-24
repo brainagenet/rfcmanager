@@ -17,6 +17,9 @@ import net.brainage.rfc.Constants;
 import net.brainage.rfc.model.ChangeRequest;
 import net.brainage.rfc.model.ChangeRequestResource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 
  * 
@@ -25,6 +28,8 @@ import net.brainage.rfc.model.ChangeRequestResource;
  */
 public class ChangeRequestParser
 {
+    
+    private static final Logger log = LoggerFactory.getLogger(ChangeRequestParser.class); 
 
     public static class ChangeRequestFormInfo
     {
