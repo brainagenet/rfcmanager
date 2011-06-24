@@ -9,7 +9,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import net.brainage.rfc.util.svn.handler.AbstractSvnDiffStatusHandler;
@@ -24,6 +26,8 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNClientManager;
+import org.tmatesoft.svn.core.wc.SVNCommitClient;
+import org.tmatesoft.svn.core.wc.SVNCommitPacket;
 import org.tmatesoft.svn.core.wc.SVNDiffClient;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNUpdateClient;
@@ -74,10 +78,43 @@ public class SvnClientImpl implements SvnClient
         return svnClient;
     }
 
-    @Override
-    public void add(File file) throws SVNException {
+    public void add(File file, Collection<File> collection) throws SVNException {
+        File parent = file.getParentFile();
+        if ( parent.isDirectory() && isVersionedDirectory(parent) == false ) {
+            add(parent, collection);
+        }
         SVNWCClient wcClient = svnClientManager.getWCClient();
-        wcClient.doAdd(file, false, false, false, SVNDepth.IMMEDIATES, false, true, true);
+        wcClient.doAdd(file, true /* force */, false /* mkdir */,
+                true /* climbUnversionedParents */, SVNDepth.INFINITY /* depth */,
+                true /* includeIgnored */, true /* makeParents */);
+        collection.add(file);
+    }
+
+    public void add(File file) throws SVNException {
+        File parent = file.getParentFile();
+        if ( isVersionedDirectory(parent) == false ) {
+            if ( log.isDebugEnabled() ) {
+                log.debug("parent dir was not versioned directory.");
+            }
+            add(parent);
+        }
+        SVNWCClient wcClient = svnClientManager.getWCClient();
+        wcClient.doAdd(file, true /* force */, false /* mkdir */,
+                true /* climbUnversionedParents */, SVNDepth.INFINITY /* depth */,
+                true /* includeIgnored */, true /* makeParents */);
+    }
+
+    public void commit(List<File> entries, String commitComment) throws SVNException {
+        File[] es = new File[entries.size()];
+        entries.toArray(es);
+        commit(es, commitComment);
+    }
+
+    public void commit(File[] entries, String commitComment) throws SVNException {
+        SVNCommitClient commitClient = svnClientManager.getCommitClient();
+        SVNCommitPacket commitPacket = commitClient.doCollectCommitItems(entries, false, true,
+                SVNDepth.INFINITY, null);
+        commitClient.doCommit(commitPacket, false, commitComment);
     }
 
     /*
@@ -188,9 +225,11 @@ public class SvnClientImpl implements SvnClient
      * )
      */
     public boolean isVersionedDirectory(String path) {
+        /*
         if ( log.isInfoEnabled() ) {
             log.info("isVersionedDirectory({})", path);
         }
+        */
         return isVersionedDirectory(new File(path));
     }
 
@@ -201,9 +240,11 @@ public class SvnClientImpl implements SvnClient
      * net.brainage.crmanager.svn.SvnClient#isVersionedDirectory(java.io.File)
      */
     public boolean isVersionedDirectory(File path) {
+        /*
         if ( log.isInfoEnabled() ) {
             log.info("isVersionedDirectory({})", path.getAbsolutePath());
         }
+        */
 
         if ( path.exists() == false ) {
             throw new IllegalStateException("Input file '" + path.getAbsoluteFile()
@@ -251,6 +292,11 @@ public class SvnClientImpl implements SvnClient
         }
 
         return SVNWCUtil.isWorkingCopyRoot(rootPath);
+    }
+
+    public void delete(File target) throws SVNException {
+        SVNWCClient wcClient = svnClientManager.getWCClient();
+        wcClient.doDelete(target, true, false);
     }
 
 }

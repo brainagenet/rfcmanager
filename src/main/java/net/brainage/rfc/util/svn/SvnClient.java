@@ -5,6 +5,8 @@
 package net.brainage.rfc.util.svn;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.List;
 
 import net.brainage.rfc.util.svn.handler.AbstractSvnDiffStatusHandler;
 
@@ -20,8 +22,33 @@ import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 public interface SvnClient
 {
 
+    /**
+     * @param file
+     * @param collection
+     * @throws SVNException
+     */
+    public void add(File file, Collection<File> collection) throws SVNException;
+
+    /**
+     * @param file
+     * @throws SVNException
+     */
     public void add(File file) throws SVNException;
-    
+
+    /**
+     * @param entries
+     * @param commitComment
+     * @throws SVNException
+     */
+    public void commit(List<File> entries, String commitComment) throws SVNException;
+
+    /**
+     * @param entries
+     * @param commitComment
+     * @throws SVNException
+     */
+    public void commit(File[] entries, String commitComment) throws SVNException;
+
     /**
      * @param urlPath
      * @param destPath
@@ -79,5 +106,11 @@ public interface SvnClient
      * @throws SVNException
      */
     public boolean isWorkingCopyRoot(File rootPath) throws SVNException;
+
+    /**
+     * @param target
+     * @throws SVNException
+     */
+    public void delete(File target) throws SVNException;
 
 }
