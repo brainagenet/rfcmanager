@@ -26,7 +26,7 @@ import org.tmatesoft.svn.core.SVNException;
 public class ResourceDownloadWorkPhaseChain extends WorkPhaseChain
 {
 
-    private static final Logger log = LoggerFactory.getLogger(SvnDiffWorkPhaseChain.class);
+    private static final Logger log = LoggerFactory.getLogger(ResourceDownloadWorkPhaseChain.class);
 
     private static final String WORKPHASE_NAME = "Resource Download Work Phase";
 
@@ -81,15 +81,18 @@ public class ResourceDownloadWorkPhaseChain extends WorkPhaseChain
         ChangeRequest cr = context.getChangeRequest();
         int i = 1;
         for ( ChangeRequestResource r : cr.getResources() ) {
+            if ( "deleted".equals(r.getType()) ) {
+                continue;
+            }
             try {
                 svnClient.getFile(context.getMainStremRepoUrlPath(), r.getResource(),
                         r.getRevision(), context.getTmpPath());
                 context.setPhaseDescription("downloaded '" + r.getResource() + "'");
                 r.setStatus("OK");
-                if (log.isDebugEnabled()) {
+                if ( log.isDebugEnabled() ) {
                     log.debug("downloaded '" + r.getResource() + "'");
                 }
-            
+
             } catch ( SVNException e ) {
             }
             context.setProgressSelection(i++);

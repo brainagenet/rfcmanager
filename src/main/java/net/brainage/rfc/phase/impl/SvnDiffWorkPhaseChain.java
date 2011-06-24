@@ -59,9 +59,10 @@ public class SvnDiffWorkPhaseChain extends WorkPhaseChain
             int i = 0;
             for ( ChangeRequestResource r : resources ) {
                 context.setProgressSelection(++i);
-                if ( r.getModType() == 'A' ) {
+                if ( "added".equals(r.getType()) || "deleted".equals(r.getType()) ) {
                     continue;
                 }
+                
                 context.setPhaseDescription("diff for '" + r.getResource() + "'");
                 StringBuffer urlPath1 = new StringBuffer(context.getMainStremRepoUrlPath());
                 StringBuffer urlPath2 = new StringBuffer(context.getSnapshotRepoUrlPath());
